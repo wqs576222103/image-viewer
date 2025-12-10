@@ -10,6 +10,7 @@ const { Op } = require('sequelize');
 // 引入MySQL配置
 const { sequelize, connectDB } = require('./config/database');
 const Image = require('./models/Image');
+const { url } = require('inspector');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -38,30 +39,54 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Routes
 
-// 获取图片列表
+// 获取图片列表（支持分页）
 app.get('/api/images', async (req, res) => {
   try {
     // 检查数据库连接
     await sequelize.authenticate();
+
+    // 获取分页参数
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const offset = (page - 1) * limit;
+
     // 从url中获取筛选条件
-    const { remark, category } = req.query;
-    console.log('remark:', remark);
-    console.log('category:', category);
+    const { remark, category, name } = req.query;
     const where = {};
+    if (name) {
+      where.name = { [Op.like]: `%${name}%` };
+    }
     if (remark) {
       where.remark = { [Op.like]: `%${remark}%` };
     }
-    if(category) {
+    if (category) {
       where.category = { [Op.like]: `%${category}%` };
     }
 
-    
+    // 查询符合条件的图片总数
+    const totalCount = await Image.count({ where });
+
+    // 查询当前页的图片
     const images = await Image.findAll({
       order: [['createdAt', 'DESC']],
+      limit: limit,
+      offset: offset,
       where
     });
-    
-    res.json(images);
+
+    // 计算总页数
+    const totalPages = Math.ceil(totalCount / limit);
+
+    // 返回分页结果
+    res.json({
+      data: images,
+      pagination: {
+        currentPage: page,
+        totalPages: totalPages,
+        totalCount: totalCount,
+        pageSize: limit
+      }
+    });
   } catch (err) {
     console.error('Error fetching images:', err);
     res.status(500).json({ error: 'Failed to fetch images' });
@@ -73,7 +98,7 @@ app.get('/api/images/:id', async (req, res) => {
   try {
     // 检查数据库连接
     await sequelize.authenticate();
-    
+
     const image = await Image.findByPk(req.params.id);
     if (!image) {
       return res.status(404).json({ message: 'Image not found' });
@@ -90,15 +115,15 @@ app.post('/api/images', upload.single('image'), async (req, res) => {
   try {
     // 检查数据库连接
     await sequelize.authenticate();
-    
+
     const { name, category, remark } = req.body;
-    
+
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
     }
 
     const imageUrl = `/uploads/${req.file.filename}`;
-    
+
     const image = await Image.create({
       id: uuidv4(),
       name: name || req.file.originalname,
@@ -110,7 +135,7 @@ app.post('/api/images', upload.single('image'), async (req, res) => {
     res.status(201).json(image);
   } catch (err) {
     console.error('Error uploading image:', err);
-    
+
     // 如果上传失败，删除已保存的文件
     if (req.file) {
       const filePath = path.join(__dirname, 'uploads', req.file.filename);
@@ -118,22 +143,55 @@ app.post('/api/images', upload.single('image'), async (req, res) => {
         fs.unlinkSync(filePath);
       }
     }
-    
+
     res.status(500).json({ error: 'Failed to upload image' });
   }
 });
 
 // 更新图片信息
-app.put('/api/images/:id', async (req, res) => {
+app.put('/api/images/:id', upload.single('image'), async (req, res) => {
   try {
     // 检查数据库连接
     await sequelize.authenticate();
-    
+
     const { id } = req.params;
     const { name, category, remark } = req.body;
 
+    // 先查找原图片
+    const image = await Image.findByPk(id);
+    if (!image) {
+      // 如果有上传新文件但图片不存在，清理上传的文件
+      if (req.file) {
+        const filePath = path.join(__dirname, 'uploads', req.file.filename);
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+        }
+      }
+      return res.status(404).json({ error: 'Image not found' });
+    }
+
+    // 准备更新数据
+    const updateData = {
+      name: name || image.name,
+      category: category || image.category,
+      remark: remark || image.remark
+    };
+
+    // 如果有上传新图片，更新图片路径
+    if (req.file) {
+      // 删除旧图片文件
+      const oldFilePath = path.join(__dirname, image.url.substring(1)); // Remove leading slash
+      if (fs.existsSync(oldFilePath)) {
+        fs.unlinkSync(oldFilePath);
+      }
+      
+      // 设置新图片路径
+      updateData.url = `/uploads/${req.file.filename}`;
+    }
+
+    // 执行更新
     const [updatedRowsCount] = await Image.update(
-      { name, category, remark },
+      updateData,
       { where: { id } }
     );
 
@@ -145,6 +203,13 @@ app.put('/api/images/:id', async (req, res) => {
     res.json(updatedImage);
   } catch (err) {
     console.error('Error updating image:', err);
+    // 如果更新失败且有新上传的文件，进行清理
+    if (req.file) {
+      const filePath = path.join(__dirname, 'uploads', req.file.filename);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+    }
     res.status(500).json({ error: 'Failed to update image' });
   }
 });
@@ -154,9 +219,9 @@ app.delete('/api/images/:id', async (req, res) => {
   try {
     // 检查数据库连接
     await sequelize.authenticate();
-    
+
     const { id } = req.params;
-    
+
     const image = await Image.findByPk(id);
     if (!image) {
       return res.status(404).json({ error: 'Image not found' });
@@ -170,7 +235,7 @@ app.delete('/api/images/:id', async (req, res) => {
 
     // 从数据库中删除记录
     await image.destroy();
-    
+
     res.json({ message: 'Image deleted successfully' });
   } catch (err) {
     console.error('Error deleting image:', err);
