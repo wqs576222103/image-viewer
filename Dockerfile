@@ -13,9 +13,6 @@ RUN npm install
 # 复制应用代码
 COPY . .
 
-# 创建uploads目录并设置权限
-RUN mkdir -p uploads && chmod 755 uploads
-
 # 暴露端口
 EXPOSE 3000
 

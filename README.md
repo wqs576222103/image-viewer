@@ -123,12 +123,12 @@ docker-compose up -d
 
 ### 数据持久化
 
-MySQL 数据和上传的图片都会持久化存储在 Docker 卷中，即使容器被停止或重启也不会丢失数据。
+MySQL 数据和上传的图片都会持久化存储在 Docker 卷中，即使容器被停止、重启甚至重新构建也不会丢失数据。
 
 项目使用 Docker 命名卷来确保持久化存储：
 
 - `mysql_data` 卷: 存储 MySQL 数据库文件
-- `./uploads` 目录: 映射到主机目录以存储上传的图片
+- `uploads_data` 卷: 存储上传的图片文件
 
 要查看所有卷，可以运行：
 
@@ -136,10 +136,14 @@ MySQL 数据和上传的图片都会持久化存储在 Docker 卷中，即使容
 docker volume ls
 ```
 
-要备份数据，只需备份 Docker 卷：
+要备份数据，只需备份相应的 Docker 卷：
 
 ```bash
+# 备份数据库
 docker run --rm -v mysql_data:/data -v /path/to/backup:/backup alpine tar czf /backup/mysql_backup.tar.gz -C /data .
+
+# 备份上传的文件
+docker run --rm -v uploads_data:/data -v /path/to/backup:/backup alpine tar czf /backup/uploads_backup.tar.gz -C /data .
 ```
 
 ### 管理 Docker 卷
@@ -148,6 +152,7 @@ docker run --rm -v mysql_data:/data -v /path/to/backup:/backup alpine tar czf /b
 
 ```bash
 docker volume inspect image-viewer_mysql_data
+docker volume inspect image-viewer_uploads_data
 ```
 
 删除卷（警告：这将永久删除所有数据）：
