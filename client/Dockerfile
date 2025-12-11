@@ -16,14 +16,23 @@ COPY . .
 # 构建生产版本
 RUN npm run build
 
+# 调试：检查构建结果
+RUN ls -la /app/dist
+
 # 生产阶段
 FROM nginx:alpine as production-stage
 
 # 复制nginx配置
 COPY nginx.conf /etc/nginx/nginx.conf
 
+# 调试：检查nginx配置
+RUN cat /etc/nginx/nginx.conf
+
 # 复制构建产物到nginx目录
 COPY --from=build-stage /app/dist /usr/share/nginx/html
+
+# 调试：检查复制的文件
+RUN ls -la /usr/share/nginx/html
 
 # 暴露端口
 EXPOSE 80
