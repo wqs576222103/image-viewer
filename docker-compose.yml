@@ -12,10 +12,10 @@ services:
       - mysql_data:/var/lib/mysql
       - ./config/db-init.sql:/docker-entrypoint-initdb.d/init.sql
     environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_ROOT_PASSWORD: 123456
       MYSQL_DATABASE: imageviewer
-      MYSQL_USER: imageuser
-      MYSQL_PASSWORD: imagepassword
+      MYSQL_USER: root
+      MYSQL_PASSWORD: 123456
     command: --default-authentication-plugin=mysql_native_password
 
   # Backend service
@@ -33,8 +33,8 @@ services:
       DB_HOST: mysql
       DB_PORT: 3306
       DB_NAME: imageviewer
-      DB_USER: imageuser
-      DB_PASSWORD: imagepassword
+      DB_USER: root
+      DB_PASSWORD: 123456
 
   # Frontend service
   frontend:
