@@ -243,6 +243,54 @@ app.delete('/api/images/:id', async (req, res) => {
   }
 });
 
+// 批量删除图片
+app.delete('/api/images', async (req, res) => {
+  try {
+    // 检查数据库连接
+    await sequelize.authenticate();
+
+    const { ids } = req.body;
+
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ error: 'Invalid IDs provided' });
+    }
+
+    // 查找所有要删除的图片
+    const images = await Image.findAll({
+      where: {
+        id: ids
+      }
+    });
+
+    if (images.length === 0) {
+      return res.status(404).json({ error: 'No images found' });
+    }
+
+    // 删除文件系统中的图片文件
+    images.forEach(image => {
+      const filePath = path.join(__dirname, image.url);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+    });
+
+    // 从数据库中删除记录
+    await Image.destroy({
+      where: {
+        id: ids
+      }
+    });
+
+    res.json({ 
+      message: `Successfully deleted ${images.length} images`,
+      deletedCount: images.length
+    });
+  } catch (err) {
+    console.error('Error deleting images:', err);
+    res.status(500).json({ error: 'Failed to delete images' });
+  }
+});
+
 // 启动服务器
 app.listen(PORT, async () => {
   console.log(`Server is running on port ${PORT}`);

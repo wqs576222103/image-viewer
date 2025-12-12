@@ -32,6 +32,13 @@ class ImageService {
   deleteImage(id) {
     return axios.delete(`${API_BASE_URL}/images/${id}`)
   }
+
+  // 批量删除图片
+  deleteImages(ids) {
+    return axios.delete(`${API_BASE_URL}/images`, {
+      data: { ids }
+    })
+  }
 }
 
 export default new ImageService()

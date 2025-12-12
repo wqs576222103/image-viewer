@@ -2,7 +2,11 @@
   <div class="container">
     <div class="header">
       <h1>Image Management System</h1>
-      <el-button type="primary" @click="addImage">Add Image</el-button>
+      <div>
+        <el-button type="primary" @click="addImage">Add Image</el-button>
+        <el-button type="success" @click="batchAddImages" style="margin-left: 10px;">Batch Add Images</el-button>
+        <el-button type="danger" @click="batchDeleteImages" style="margin-left: 10px;" :disabled="selectedImages.length === 0">Batch Delete ({{ selectedImages.length }})</el-button>
+      </div>
     </div>
 
     <!-- Search Form -->
@@ -30,49 +34,36 @@
       </el-form>
     </div>
 
-    <!-- Add/Edit Form Dialog -->
-    <el-dialog
-      :title="editMode ? 'Edit Image' : 'Add Image'"
+    <!-- Single Image Form Dialog -->
+    <image-form-dialog
       v-model="showAddForm"
-      width="500px"
-    >
-      <el-form :model="imageForm" ref="imageFormRef" label-width="100px">
-        <el-form-item label="Image" prop="image">
-          <input  type="file" @change="handleFileUpload" accept="image/*" />
-          <div v-if="imagePreview">
-            <img
-              :src="imagePreview"
-              style="width: 100px; height: 100px; object-fit: cover"
-            />
-          </div>
-        </el-form-item>
-        <el-form-item label="Category" prop="category">
-          <el-input
-            v-model="imageForm.category"
-            placeholder="Enter category"
-          ></el-input>
-        </el-form-item>
-        <el-form-item label="Remark" prop="remark">
-          <el-input
-            v-model="imageForm.remark"
-            type="textarea"
-            placeholder="Enter remark"
-          ></el-input>
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <span class="dialog-footer">
-          <el-button @click="showAddForm = false">Cancel</el-button>
-          <el-button type="primary" @click="saveImage">{{
-            editMode ? "Update" : "Add"
-          }}</el-button>
-        </span>
-      </template>
-    </el-dialog>
+      :edit-mode="editMode"
+      :image-data="currentImageData"
+      @save="handleSaveImage"
+    />
+
+    <!-- Batch Upload Dialog -->
+    <batch-upload-dialog
+      v-model="showBatchAddForm"
+      @upload="handleBatchUpload"
+    />
+
+    <!-- Image Preview Dialog -->
+    <image-preview-dialog
+      v-model="showPreviewDialog"
+      :image-data="previewImageData"
+    />
 
     <!-- Image List -->
     <div class="image-grid">
-      <div class="image-card" v-for="image in images" :key="image.id">
+      <div class="image-card" v-for="image in images" :key="image.id" :class="{ selected: selectedImages.includes(image.id) }" @click="previewImage(image)">
+        <div class="selection-overlay">
+          <el-checkbox 
+            :model-value="selectedImages.includes(image.id)" 
+            @click.stop="toggleImageSelection(image.id)"
+            class="selection-checkbox"
+          />
+        </div>
         <img :src="image.imagePath" :alt="image.name" class="image-preview" />
         <div class="image-info">
           <p><strong>Name:</strong> {{ image.name || "" }}</p>
@@ -86,10 +77,8 @@
           </p>
         </div>
         <div class="actions">
-          <el-button size="small" @click="editImage(image)">Edit</el-button>
-          <el-button size="small" type="danger" @click="deleteImage(image.id)"
-            >Delete</el-button
-          >
+          <el-button size="small" @click.stop="editImage(image)">Edit</el-button>
+          <el-button size="small" type="danger" @click.stop="deleteImage(image.id)">Delete</el-button>
         </div>
       </div>
     </div>
@@ -111,17 +100,30 @@
 <script>
 import { ref, reactive, onMounted } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
+import { Check } from "@element-plus/icons-vue";
 import imageService, { FILE_SERVER_URL } from "../services/imageService";
+import ImageFormDialog from "./ImageFormDialog.vue";
+import BatchUploadDialog from "./BatchUploadDialog.vue";
+import ImagePreviewDialog from "./ImagePreviewDialog.vue";
 
 export default {
   name: "ImageViewer",
+  components: {
+    ImageFormDialog,
+    BatchUploadDialog,
+    ImagePreviewDialog,
+    Check
+  },
   setup() {
     // State
     const images = ref([]);
     const showAddForm = ref(false);
+    const showBatchAddForm = ref(false);
+    const showPreviewDialog = ref(false);
     const editMode = ref(false);
-    const imagePreview = ref("");
-    const currentImageId = ref("");
+    const currentImageData = ref({});
+    const previewImageData = ref({});
+    const selectedImages = ref([]);
 
     // 分页状态
     const pagination = reactive({
@@ -138,32 +140,6 @@ export default {
       remark: "",
     });
 
-    const imageForm = reactive({
-      image: null,
-      category: "",
-      name: "",
-      remark: "",
-    });
-
-    // Handle file upload
-    const handleFileUpload = (event) => {
-      const file = event.target.files[0];
-      if(!file) {
-        return
-      }
-      imageForm.image = file;
-      imageForm.name = file.name;
-      // imageForm.remark = file.name;
-      // imageForm.category = file.name;
-
-      // Preview image
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        imagePreview.value = e.target.result;
-      };
-      reader.readAsDataURL(file);
-    };
-
     // 格式化日期
     const formatDate = (dateString) => {
       if (!dateString) return "";
@@ -171,20 +147,54 @@ export default {
       return date.toLocaleDateString() + " " + date.toLocaleTimeString();
     };
 
-    // Save image (add or update)
-    const saveImage = async () => {
+    const toggleImageSelection = (id) => {
+      const index = selectedImages.value.indexOf(id);
+      if (index === -1) {
+        selectedImages.value.push(id);
+      } else {
+        selectedImages.value.splice(index, 1);
+      }
+    };
+
+    const batchAddImages = () => {
+      showBatchAddForm.value = true;
+    };
+
+    const batchDeleteImages = async () => {
+      if (selectedImages.value.length === 0) {
+        ElMessage.warning("Please select at least one image to delete");
+        return;
+      }
+
       try {
-        const formData = new FormData();
-        // Only append image if it exists (not null)
-        if (imageForm.image instanceof File) {
-          formData.append("image", imageForm.image);
+        await ElMessageBox.confirm(
+          `Are you sure you want to delete ${selectedImages.value.length} selected images?`,
+          "Warning",
+          {
+            confirmButtonText: "Yes",
+            cancelButtonText: "No",
+            type: "warning",
+          }
+        );
+
+        await imageService.deleteImages(selectedImages.value);
+        ElMessage.success(`${selectedImages.value.length} images deleted successfully`);
+        selectedImages.value = [];
+        searchImages();
+      } catch (error) {
+        if (error !== "cancel") {
+          console.error("Error deleting images:", error);
+          ElMessage.error("Failed to delete images");
         }
-        formData.append("name", imageForm.name);
-        formData.append("category", imageForm.category);
-        formData.append("remark", imageForm.remark);
-        if (editMode.value) {
+      }
+    };
+
+    // Handle save image (add or update)
+    const handleSaveImage = async ({ id, formData, isEditMode }) => {
+      try {
+        if (isEditMode) {
           // Edit mode
-          await imageService.updateImage(currentImageId.value, formData);
+          await imageService.updateImage(id, formData);
           ElMessage.success("Image updated successfully");
         } else {
           // Add mode
@@ -192,8 +202,8 @@ export default {
           ElMessage.success("Image added successfully");
         }
 
-        // Reset form and reload images
-        resetForm();
+        // Close form and reload images
+        showAddForm.value = false;
         searchImages();
       } catch (error) {
         console.error("Error saving image:", error);
@@ -201,27 +211,70 @@ export default {
       }
     };
 
+    const handleBatchUpload = async ({ files, category, remark }) => {
+      let successCount = 0;
+      let failCount = 0;
+
+      try {
+        // Process each file sequentially
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          try {
+            const formData = new FormData();
+            formData.append("image", file.file);
+            formData.append("name", file.name);
+            formData.append("category", category);
+            formData.append("remark", remark);
+
+            await imageService.createImage(formData);
+            successCount++;
+            
+            // Update progress (optional)
+            ElMessage.success(`Uploaded: ${file.name}`);
+          } catch (error) {
+            console.error(`Error uploading ${file.name}:`, error);
+            failCount++;
+            ElMessage.error(`Failed to upload: ${file.name}`);
+          }
+        }
+
+        // Show final result
+        if (failCount === 0) {
+          ElMessage.success(`Successfully uploaded all ${successCount} images`);
+        } else {
+          ElMessage.warning(`Uploaded ${successCount} images, ${failCount} failed`);
+        }
+
+        // Close dialog and refresh image list
+        showBatchAddForm.value = false;
+        searchImages();
+      } catch (error) {
+        console.error("Error in batch upload:", error);
+        ElMessage.error("Batch upload failed");
+      }
+    };
+
     const addImage = () => {
       editMode.value = false;
-      currentImageId.value = "";
-      imageForm.name = "";
-      imageForm.category = "";
-      imageForm.remark = "";
-      imageForm.image = null;
-      imagePreview.value = "";
+      currentImageData.value = {};
       showAddForm.value = true;
     };
 
     // Edit image
     const editImage = (image) => {
       editMode.value = true;
-      currentImageId.value = image.id;
-      imageForm.name = image.name || "";
-      imageForm.category = image.category;
-      imageForm.remark = image.remark;
-      imageForm.image = null; // Don't send image file when editing unless a new one is selected
-      imagePreview.value = image.imagePath;
+      currentImageData.value = {
+        ...image,
+        imagePath: image.url ? `${FILE_SERVER_URL}${image.url}` : ""
+      };
       showAddForm.value = true;
+    };
+
+    // Preview image
+    const previewImage = (image) => {
+      console.log("Preview image:", image);
+      previewImageData.value = image;
+      showPreviewDialog.value = true;
     };
 
     // Delete image
@@ -306,18 +359,6 @@ export default {
       searchImages();
     };
 
-    // Reset form
-    const resetForm = () => {
-      showAddForm.value = false;
-      editMode.value = false;
-      currentImageId.value = "";
-      imageForm.image = null;
-      imageForm.name = "";
-      imageForm.category = "";
-      imageForm.remark = "";
-      imagePreview.value = "";
-    };
-
     // Lifecycle
     onMounted(() => {
       searchImages();
@@ -326,19 +367,25 @@ export default {
     return {
       images,
       showAddForm,
+      showBatchAddForm,
+      showPreviewDialog,
       editMode,
-      imagePreview,
+      currentImageData,
+      previewImageData,
+      selectedImages,
       searchForm,
-      imageForm,
       pagination,
-      handleFileUpload,
-      saveImage,
+      batchAddImages,
+      batchDeleteImages,
+      toggleImageSelection,
+      previewImage,
+      handleSaveImage,
+      handleBatchUpload,
       addImage,
       editImage,
       deleteImage,
       searchImages,
       resetSearch,
-      resetForm,
       handlePageChange,
       formatDate,
     };
@@ -374,6 +421,12 @@ export default {
   border-radius: 4px;
   overflow: hidden;
   box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  position: relative;
+  cursor: pointer;
+}
+.image-card.selected {
+  border-color: #409eff;
+  box-shadow: 0 0 0 2px #409eff;
 }
 .image-preview {
   width: 100%;
@@ -392,5 +445,23 @@ export default {
   display: flex;
   justify-content: center;
   margin-top: 30px;
+}
+
+.selection-overlay {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 10;
+  background-color: rgba(255, 255, 255, 0.8);
+  border-radius: 4px;
+  padding: 5px;
+}
+
+.selection-checkbox {
+  zoom: 1.5;
+}
+
+.image-card:hover .selection-overlay {
+  background-color: rgba(255, 255, 255, 1);
 }
 </style>
