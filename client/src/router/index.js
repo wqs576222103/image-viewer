@@ -10,7 +10,12 @@ const routes = [
     path: '/imageViewer',
     name: 'ImageViewer',
     component: ImageViewer
-  }
+  },
+  {
+  path: '/mobileImageViewer',
+  name: 'MobileImageViewer',
+  component: () => import('../pages/MobileImageViewer.vue')
+}
 ]
 
 const router = createRouter({
