@@ -13,6 +13,15 @@ CREATE TABLE IF NOT EXISTS images (
     updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
+-- Create categories table
+CREATE TABLE IF NOT EXISTS categories (
+    id VARCHAR(36) PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    code VARCHAR(100) NOT NULL UNIQUE,
+    createTime TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updateTime TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
 -- Insert sample data (optional)
 -- INSERT INTO images (id, name, url, category, remark) VALUES 
 -- ('sample-1', 'Sample Image 1', '/uploads/sample1.jpg', 'This is a sample image'),

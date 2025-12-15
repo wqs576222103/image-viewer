@@ -19,17 +19,31 @@
         </el-input>
       </div>
       
+      <!-- 默认展示分类筛选 -->
+      <div class="category-filter">
+        <el-select 
+          v-model="searchForm.category" 
+          placeholder="Select Category" 
+          clearable 
+          filterable
+          style="width: 100%"
+          @change="searchImages"
+        >
+          <el-option
+            v-for="category in categories"
+            :key="category.code"
+            :label="category.name"
+            :value="category.code"
+          />
+        </el-select>
+      </div>
+      
       <div class="filter-button" @click="showFilters = !showFilters">
         <el-icon><Filter /></el-icon>
-        <span>Filters</span>
+        <span>More Filters</span>
       </div>
       
       <div v-show="showFilters" class="filters">
-        <el-input
-          v-model="searchForm.category"
-          placeholder="Category"
-          clearable
-        />
         <el-input
           v-model="searchForm.remark"
           placeholder="Remark"
@@ -66,6 +80,8 @@
     <image-preview-dialog
       v-model="showPreviewDialog"
       :image-data="previewImageData"
+      :images="images"
+      @change-image="handleChangeImage"
     />
 
     <!-- 回到顶部按钮 -->
@@ -88,6 +104,7 @@ import {
   CaretTop
 } from "@element-plus/icons-vue";
 import imageService, { FILE_SERVER_URL } from "../services/imageService";
+import categoryService from "../services/categoryService";
 import ImagePreviewDialog from "../components/ImagePreviewDialog.vue";
 import PullToRefresh from "../components/PullToRefresh.vue";
 import InfiniteScroll from "../components/InfiniteScroll.vue";
@@ -107,6 +124,7 @@ export default {
   setup() {
     // 状态
     const images = ref([]);
+    const categories = ref([]);
     const showPreviewDialog = ref(false);
     const previewImageData = ref({});
     const showFilters = ref(false);
@@ -137,6 +155,11 @@ export default {
     const previewImage = (image) => {
       previewImageData.value = image;
       showPreviewDialog.value = true;
+    };
+
+    // 处理图片切换
+    const handleChangeImage = (image) => {
+      previewImageData.value = image;
     };
 
     // 搜索图片
@@ -253,9 +276,21 @@ export default {
       showBackToTop.value = window.scrollY > 300;
     };
 
+    // 加载分类
+    const loadCategories = async () => {
+      try {
+        const response = await categoryService.getAllCategories();
+        categories.value = response.data;
+      } catch (error) {
+        console.error("Error loading categories:", error);
+        ElMessage.error("Failed to load categories");
+      }
+    };
+
     // 生命周期钩子
     onMounted(() => {
       searchImages();
+      loadCategories();
       window.addEventListener("scroll", handleScroll);
     });
 
@@ -265,6 +300,7 @@ export default {
 
     return {
       images,
+      categories,
       showPreviewDialog,
       previewImageData,
       showFilters,
@@ -276,6 +312,7 @@ export default {
       searchForm,
       pagination,
       previewImage,
+      handleChangeImage,
       searchImages,
       resetSearch,
       refreshImages,
@@ -315,6 +352,10 @@ export default {
 }
 
 .search-bar {
+  margin-bottom: 10px;
+}
+
+.category-filter {
   margin-bottom: 10px;
 }
 

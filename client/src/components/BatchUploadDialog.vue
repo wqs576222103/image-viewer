@@ -1,283 +1,257 @@
 <template>
-  <el-dialog
-    title="Batch Add Images"
-    v-model="visible"
-    width="700px"
+  <el-dialog 
+    title="Batch Upload Images" 
+    v-model="visible" 
+    width="600px"
+    :fullscreen="isMobile"
     @close="handleClose"
   >
-    <el-form :model="form" label-width="120px">
-      <el-form-item label="Category">
-        <el-input
-          v-model="form.category"
-          placeholder="Enter category for all images"
-        ></el-input>
-      </el-form-item>
-      <el-form-item label="Remark">
-        <el-input
-          v-model="form.remark"
-          type="textarea"
-          placeholder="Enter remark for all images"
-        ></el-input>
-      </el-form-item>
-      
-      <el-form-item label="Images">
-        <div class="batch-upload-section">
-          <el-button type="primary" @click="triggerFileSelect">
-            Select Images
-          </el-button>
-          <input 
-            ref="fileInput"
-            type="file" 
-            @change="handleFileSelection" 
-            accept="image/*" 
-            multiple
-            style="display: none;"
-          />
-          
-          <div class="preview-grid" v-if="files.length > 0">
-            <div 
-              v-for="(file, index) in files" 
-              :key="index"
-              class="preview-item"
+    <el-form 
+      :model="form" 
+      :rules="rules" 
+      ref="formRef"
+      label-width="120px"
+      :label-position="isMobile ? 'top' : 'right'"
+    >
+      <el-form-item label="Files" prop="files">
+        <input 
+          type="file" 
+          ref="fileInput" 
+          @change="handleFileChange" 
+          accept="image/*"
+          multiple
+        />
+        <div class="file-list" v-if="form.files.length > 0">
+          <div 
+            v-for="(file, index) in form.files" 
+            :key="index" 
+            class="file-item"
+          >
+            <span>{{ file.name }}</span>
+            <el-input 
+              v-model="file.name" 
+              placeholder="Image Name"
+              size="small"
+              class="filename-input"
+            />
+            <el-button 
+              type="danger" 
+              circle 
+              size="small" 
+              @click="removeFile(index)"
             >
-              <img 
-                :src="file.previewUrl" 
-                :alt="file.name"
-                class="preview-image"
-              />
-              <div class="file-info">
-                <p class="file-name">{{ truncateFileName(file.name, 20) }}</p>
-                <el-button 
-                  type="danger" 
-                  :icon="Delete" 
-                  circle
-                  size="small"
-                  @click="removeFile(index)"
-                ></el-button>
-              </div>
-            </div>
-          </div>
-          
-          <div v-else class="no-files">
-            <p>No images selected</p>
+              <el-icon><Delete /></el-icon>
+            </el-button>
           </div>
         </div>
+      </el-form-item>
+      
+      <el-form-item label="Category" prop="category">
+        <el-select 
+          v-model="form.category" 
+          placeholder="Select Category" 
+          clearable 
+          filterable
+          style="width: 100%"
+        >
+          <el-option
+            v-for="category in categories"
+            :key="category.code"
+            :label="category.name"
+            :value="category.code"
+          />
+        </el-select>
+      </el-form-item>
+      
+      <el-form-item label="Remark" prop="remark">
+        <el-input v-model="form.remark" type="textarea" />
       </el-form-item>
     </el-form>
     
     <template #footer>
       <span class="dialog-footer">
-        <el-button @click="close">Cancel</el-button>
-        <el-button 
-          type="primary" 
-          @click="upload"
-          :disabled="files.length === 0"
-          :loading="uploading"
-        >
-          Upload {{ files.length }} Images
-        </el-button>
+        <el-button @click="handleClose">Cancel</el-button>
+        <el-button type="primary" @click="submitForm" :disabled="form.files.length === 0">Upload</el-button>
       </span>
     </template>
   </el-dialog>
 </template>
 
-
 <script>
-import { ref, reactive, watch } from "vue";
-import { ElMessage } from "element-plus";
-import { Delete } from "@element-plus/icons-vue";
+import { ref, reactive, watch, getCurrentInstance, onMounted, onUnmounted } from 'vue';
+import { ElMessage } from 'element-plus';
+import { Delete } from '@element-plus/icons-vue'
 
 export default {
-  name: "BatchUploadDialog",
+  name: 'BatchUploadDialog',
+  components: {
+    Delete
+  },
   props: {
-    modelValue: {
-      type: Boolean,
-      default: false
+    modelValue: Boolean,
+    categories: {
+      type: Array,
+      default: () => []
     }
   },
-  emits: ["update:modelValue", "upload"],
+  emits: ['update:modelValue', 'upload'],
   setup(props, { emit }) {
+    const { proxy } = getCurrentInstance();
+    
     // State
     const visible = ref(false);
     const fileInput = ref(null);
-    const uploading = ref(false);
+    const isMobile = ref(window.innerWidth <= 768);
     
+    // Form
     const form = reactive({
-      category: "",
-      remark: ""
+      files: [],
+      category: '',
+      remark: ''
     });
-
-    const files = ref([]);
-
-    // Watch for modelValue changes
-    watch(
-      () => props.modelValue,
-      (newValue) => {
-        visible.value = newValue;
-        if (newValue) {
-          resetForm();
-        }
+    
+    const formRef = ref(null);
+    
+    // Validation rules
+    const rules = {
+      files: [
+        { required: true, message: 'Please select at least one file', trigger: 'change' }
+      ]
+    };
+    
+    // 监听窗口大小变化
+    const handleResize = () => {
+      isMobile.value = window.innerWidth <= 768;
+    };
+    
+    // Watch for visibility changes
+    watch(() => props.modelValue, (newValue) => {
+      visible.value = newValue;
+      if (!newValue) {
+        resetForm();
       }
-    );
-
-    // Watch for visible changes
-    watch(visible, (newValue) => {
-      emit("update:modelValue", newValue);
     });
-
-    // Methods
-    const triggerFileSelect = () => {
-      fileInput.value.click();
+    
+    // Handle file change
+    const handleFileChange = (event) => {
+      const files = Array.from(event.target.files);
+      form.files = files.map(file => ({
+        file,
+        name: file.name.split('.')[0] // Default name without extension
+      }));
     };
-
-    const handleFileSelection = (event) => {
-      const selectedFiles = Array.from(event.target.files);
-      if (!selectedFiles.length) return;
-
-      // Process each selected file
-      selectedFiles.forEach(file => {
-        // Check if file is an image
-        if (!file.type.startsWith('image/')) {
-          ElMessage.warning(`${file.name} is not an image file and was skipped.`);
-          return;
-        }
-
-        // Create preview
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          files.value.push({
-            file: file,
-            name: file.name,
-            previewUrl: e.target.result
-          });
-        };
-        reader.readAsDataURL(file);
-      });
-
-      // Clear the input to allow selecting the same files again
-      event.target.value = '';
-    };
-
+    
+    // Remove file
     const removeFile = (index) => {
-      files.value.splice(index, 1);
+      form.files.splice(index, 1);
     };
-
-    const truncateFileName = (name, maxLength) => {
-      if (name.length <= maxLength) return name;
-      return name.substr(0, maxLength) + '...';
-    };
-
-    const upload = async () => {
-      if (files.value.length === 0) {
-        ElMessage.warning("Please select at least one image");
-        return;
+    
+    // Reset form
+    const resetForm = () => {
+      proxy.$refs.formRef.resetFields();
+      form.files = [];
+      form.category = '';
+      form.remark = '';
+      if (fileInput.value) {
+        fileInput.value.value = '';
       }
-
-      uploading.value = true;
-      
-      try {
-        emit("upload", {
-          files: [...files.value],
+    };
+    
+    // Handle close
+    const handleClose = () => {
+      visible.value = false;
+      emit('update:modelValue', false);
+    };
+    
+    // Submit form
+    const submitForm = () => {
+      proxy.$refs.formRef.validate((valid) => {
+        if (!valid) return;
+        
+        emit('upload', {
+          files: form.files,
           category: form.category,
           remark: form.remark
         });
-      } catch (error) {
-        console.error("Error in batch upload:", error);
-        ElMessage.error("Batch upload failed");
-        uploading.value = false;
-      }
+      });
     };
-
-    const resetForm = () => {
-      form.category = "";
-      form.remark = "";
-      files.value = [];
-    };
-
-    const close = () => {
-      visible.value = false;
-    };
-
-    const handleClose = () => {
-      resetForm();
-    };
-
-    // Expose method to parent to stop loading state
-    const finishUpload = () => {
-      uploading.value = false;
-    };
-
+    
+    // 添加窗口大小监听
+    onMounted(() => {
+      window.addEventListener('resize', handleResize);
+    });
+    
+    onUnmounted(() => {
+      window.removeEventListener('resize', handleResize);
+    });
+    
     return {
       visible,
-      fileInput,
-      uploading,
       form,
-      files,
-      Delete,
-      triggerFileSelect,
-      handleFileSelection,
+      formRef,
+      rules,
+      fileInput,
+      isMobile,
+      handleFileChange,
       removeFile,
-      truncateFileName,
-      upload,
-      close,
       handleClose,
-      finishUpload
+      submitForm
     };
   }
 };
 </script>
 
 <style scoped>
-.batch-upload-section {
+.file-list {
   margin-top: 10px;
-  width: 100%;
 }
 
-.preview-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  gap: 15px;
-  margin-top: 15px;
-  max-height: 300px;
-  overflow-y: auto;
-  padding: 10px;
-  border: 1px dashed #dcdfe6;
-  border-radius: 4px;
-}
-
-.preview-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.preview-image {
-  width: 100px;
-  height: 100px;
-  object-fit: cover;
-  border-radius: 4px;
-}
-
-.file-info {
+.file-item {
   display: flex;
   align-items: center;
-  margin-top: 5px;
-  width: 100%;
+  gap: 10px;
+  padding: 5px 0;
+  border-bottom: 1px solid #eee;
 }
 
-.file-name {
-  font-size: 12px;
-  margin: 0;
+.file-item span {
   flex: 1;
-  text-align: center;
+  font-size: 12px;
+  color: #666;
+  min-width: 100px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.no-files {
-  text-align: center;
-  color: #909399;
-  padding: 20px;
+.filename-input {
+  width: 180px;
+}
+
+@media (max-width: 768px) {
+  :deep(.el-dialog) {
+    width: 90% !important;
+    max-width: none;
+    margin: 0 auto;
+  }
+  
+  :deep(.el-dialog__body) {
+    padding: 15px;
+  }
+  
+  :deep(.el-form-item__label) {
+    padding-bottom: 5px;
+  }
+  
+  .file-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+    padding: 10px 0;
+  }
+  
+  .filename-input {
+    width: 100%;
+  }
 }
 </style>

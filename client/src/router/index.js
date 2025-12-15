@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import ImageViewer from '../pages/ImageViewer.vue'
+import CategoryManager from '../pages/CategoryManager.vue'
 
 const routes = [
   {
@@ -12,9 +13,14 @@ const routes = [
     component: ImageViewer
   },
   {
+    path: '/categoryManager',
+    name: 'CategoryManager',
+    component: CategoryManager
+  },
+  {
   path: '/mobileImageViewer',
   name: 'MobileImageViewer',
-  component: () => import('../pages/MobileImageViewer.vue')
+  component: () => import('../pages/MobileImageViewer.vue'),
 }
 ]
 

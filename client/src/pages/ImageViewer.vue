@@ -6,6 +6,7 @@
         <el-button type="primary" @click="addImage">Add Image</el-button>
         <el-button type="success" @click="batchAddImages" style="margin-left: 10px;">Batch Add Images</el-button>
         <el-button type="danger" @click="batchDeleteImages" style="margin-left: 10px;" :disabled="selectedImages.length === 0">Batch Delete ({{ selectedImages.length }})</el-button>
+        <el-button type="info" style="margin-left: 10px;" @click="goToCategoryManager">Manage Categories</el-button>
       </div>
     </div>
 
@@ -19,10 +20,19 @@
           ></el-input>
         </el-form-item>
         <el-form-item label="Category">
-          <el-input
+          <el-select
             v-model="searchForm.category"
-            placeholder="Category"
-          ></el-input>
+            placeholder="Select Category"
+            clearable
+            filterable
+          >
+            <el-option
+              v-for="category in categories"
+              :key="category.code"
+              :label="category.name"
+              :value="category.code"
+            />
+          </el-select>
         </el-form-item>
         <el-form-item label="Remark">
           <el-input v-model="searchForm.remark" placeholder="Remark"></el-input>
@@ -39,12 +49,14 @@
       v-model="showAddForm"
       :edit-mode="editMode"
       :image-data="currentImageData"
+      :categories="categories"
       @save="handleSaveImage"
     />
 
     <!-- Batch Upload Dialog -->
     <batch-upload-dialog
       v-model="showBatchAddForm"
+      :categories="categories"
       @upload="handleBatchUpload"
     />
 
@@ -67,7 +79,7 @@
         <img :src="image.imagePath" :alt="image.name" class="image-preview" />
         <div class="image-info">
           <p><strong>Name:</strong> {{ image.name || "" }}</p>
-          <p><strong>Category:</strong> {{ image.category || "" }}</p>
+          <p><strong>Category:</strong> {{ getCategoryName(image.category) || image.category || "" }}</p>
           <p><strong>remark:</strong> {{ image.remark || "" }}</p>
           <p>
             <strong>Created:</strong> {{ formatDate(image.createdAt) || "" }}
@@ -100,8 +112,10 @@
 <script>
 import { ref, reactive, onMounted } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
+import { useRouter } from 'vue-router';
 import { Check } from "@element-plus/icons-vue";
 import imageService, { FILE_SERVER_URL } from "../services/imageService";
+import categoryService from "../services/categoryService";
 import ImageFormDialog from "../components/ImageFormDialog.vue";
 import BatchUploadDialog from "../components/BatchUploadDialog.vue";
 import ImagePreviewDialog from "../components/ImagePreviewDialog.vue";
@@ -115,8 +129,11 @@ export default {
     Check
   },
   setup() {
+    const router = useRouter();
+    
     // State
     const images = ref([]);
+    const categories = ref([]);
     const showAddForm = ref(false);
     const showBatchAddForm = ref(false);
     const showPreviewDialog = ref(false);
@@ -145,6 +162,18 @@ export default {
       if (!dateString) return "";
       const date = new Date(dateString);
       return date.toLocaleDateString() + " " + date.toLocaleTimeString();
+    };
+
+    // Get category name by code
+    const getCategoryName = (code) => {
+      if (!code) return '';
+      const category = categories.value.find(cat => cat.code === code);
+      return category ? category.name : code;
+    };
+
+    // Navigate to category manager
+    const goToCategoryManager = () => {
+      router.push('/categoryManager');
     };
 
     const toggleImageSelection = (id) => {
@@ -359,13 +388,26 @@ export default {
       searchImages();
     };
 
+    // Load categories
+    const loadCategories = async () => {
+      try {
+        const response = await categoryService.getAllCategories();
+        categories.value = response.data;
+      } catch (error) {
+        console.error("Error loading categories:", error);
+        ElMessage.error("Failed to load categories");
+      }
+    };
+
     // Lifecycle
     onMounted(() => {
       searchImages();
+      loadCategories();
     });
 
     return {
       images,
+      categories,
       showAddForm,
       showBatchAddForm,
       showPreviewDialog,
@@ -388,6 +430,8 @@ export default {
       resetSearch,
       handlePageChange,
       formatDate,
+      getCategoryName,
+      goToCategoryManager
     };
   },
 };
