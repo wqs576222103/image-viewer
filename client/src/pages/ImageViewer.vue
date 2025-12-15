@@ -102,9 +102,9 @@ import { ref, reactive, onMounted } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { Check } from "@element-plus/icons-vue";
 import imageService, { FILE_SERVER_URL } from "../services/imageService";
-import ImageFormDialog from "./ImageFormDialog.vue";
-import BatchUploadDialog from "./BatchUploadDialog.vue";
-import ImagePreviewDialog from "./ImagePreviewDialog.vue";
+import ImageFormDialog from "../components/ImageFormDialog.vue";
+import BatchUploadDialog from "../components/BatchUploadDialog.vue";
+import ImagePreviewDialog from "../components/ImagePreviewDialog.vue";
 
 export default {
   name: "ImageViewer",

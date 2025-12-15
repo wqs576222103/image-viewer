@@ -1,9 +1,13 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import ImageViewer from '../components/ImageViewer.vue'
+import ImageViewer from '../pages/ImageViewer.vue'
 
 const routes = [
   {
     path: '/',
+    redirect: '/imageViewer'
+  },
+  {
+    path: '/imageViewer',
     name: 'ImageViewer',
     component: ImageViewer
   }
