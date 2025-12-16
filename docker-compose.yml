@@ -9,7 +9,7 @@ services:
     ports:
       - "3306:3306"
     volumes:
-      - mysql_data:/var/lib/mysql
+      - ./mysql_data:/var/lib/mysql
       - ./config/db-init.sql:/docker-entrypoint-initdb.d/init.sql
     environment:
       MYSQL_ROOT_PASSWORD: 123456
@@ -32,7 +32,7 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - uploads_data:/app/uploads
+      - ./uploads:/app/uploads
     depends_on:
       mysql:
         condition: service_healthy
@@ -48,13 +48,8 @@ services:
     build: ./client
     container_name: image-viewer-frontend
     restart: always
+    # 这里端口保持一样，为了docker 里面的nginx能访问vue history模式
     ports:
       - "8080:8080"
     depends_on:
       - backend
-
-volumes:
-  mysql_data:
-    driver: local
-  uploads_data:
-    driver: local

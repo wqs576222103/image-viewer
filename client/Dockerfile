@@ -10,6 +10,9 @@ COPY package*.json ./
 # 安装所有依赖
 RUN npm ci
 
+# 如果不存在mysql_data，则创建mysql_data文件
+RUN mkdir -p ./mysql_data
+
 # 复制应用源代码
 COPY . .
 
@@ -24,6 +27,7 @@ FROM nginx:alpine as production-stage
 
 # 复制nginx配置
 COPY nginx.conf /etc/nginx/nginx.conf
+
 # 调试：检查nginx配置
 RUN cat /etc/nginx/nginx.conf
 
