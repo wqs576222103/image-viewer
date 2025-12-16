@@ -23,7 +23,8 @@ RUN ls -la /app/dist
 FROM nginx:alpine as production-stage
 
 # 复制nginx配置
-COPY nginx.conf /etc/nginx/nginx.conf
+# COPY nginx.conf /etc/nginx/nginx.conf
+COPY nginx.conf /etc/nginx/conf.d/nginx.conf
 
 # 调试：检查nginx配置
 RUN cat /etc/nginx/nginx.conf
