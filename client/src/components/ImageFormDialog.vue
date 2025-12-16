@@ -14,9 +14,6 @@
       :label-position="isMobile ? 'top' : 'right'"
       enctype="multipart/form-data"
     >
-      <el-form-item label="Name" prop="name">
-        <el-input v-model="form.name" />
-      </el-form-item>
       
       <el-form-item label="Image" prop="image" :required="!editMode">
         <input 
@@ -32,6 +29,10 @@
         <div v-if="editMode">
           <el-checkbox v-model="removeImage">Remove current image</el-checkbox>
         </div>
+      </el-form-item>
+
+      <el-form-item label="Name" prop="name">
+        <el-input v-model="form.name" clearable />
       </el-form-item>
       
       <el-form-item label="Category" prop="category">
@@ -52,7 +53,7 @@
       </el-form-item>
       
       <el-form-item label="Remark" prop="remark">
-        <el-input v-model="form.remark" type="textarea" />
+        <el-input v-model="form.remark" type="textarea" clearable />
       </el-form-item>
     </el-form>
     
@@ -158,6 +159,9 @@ export default {
       const file = event.target.files[0];
       if (file) {
         form.image = file;
+        // 自动将图片名称填充到Name字段（去除扩展名）
+        const fileNameWithoutExtension = file.name.replace(/\.[^/.]+$/, "");
+          form.name = fileNameWithoutExtension;
       } else {
         form.image = null;
       }
