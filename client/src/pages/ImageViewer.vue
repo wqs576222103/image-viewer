@@ -6,7 +6,7 @@
         <el-button type="primary" @click="addImage">Add Image</el-button>
         <el-button type="success" @click="batchAddImages" style="margin-left: 10px;">Batch Add Images</el-button>
         <el-button type="danger" @click="batchDeleteImages" style="margin-left: 10px;" :disabled="selectedImages.length === 0">Batch Delete ({{ selectedImages.length }})</el-button>
-        <el-button type="info" style="margin-left: 10px;" @click="goToCategoryManager">Manage Categories</el-button>
+        <!-- <el-button type="info" style="margin-left: 10px;" @click="goToCategoryManager">Manage Categories</el-button> -->
       </div>
     </div>
 
