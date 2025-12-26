@@ -1,6 +1,11 @@
 kind: pipeline
-type: ssh
 name: deploy-to-server
+
+# 核心关键点
+platform:
+  os: linux
+  arch: amd64
+
 
 steps:
   - name: deploy
