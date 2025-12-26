@@ -6,6 +6,9 @@ platform:
   os: linux
   arch: amd64
 
+clone:
+  disable: true  # 禁用自动克隆
+
 
 steps:
   - name: deploy
