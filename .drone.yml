@@ -37,6 +37,10 @@ trigger:
   event:
     - push
     - promote
+  path:
+    exclude:
+      - .github/**
+      - .github/workflows/**
 
 branches:
   include:
