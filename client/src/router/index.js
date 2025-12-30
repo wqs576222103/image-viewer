@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import ImageViewer from '../pages/ImageViewer.vue'
 import CategoryManager from '../pages/CategoryManager.vue'
 import AlbumViewer from '../pages/AlbumViewer.vue'
+import PhotoAlbum from '../pages/PhotoAlbum.vue'
 
 const routes = [
   {
@@ -42,6 +43,16 @@ const routes = [
     path: '/album',
     name: 'AlbumViewer',
     component: AlbumViewer,
+    meta: {
+      title: 'Photo Album',
+      icon: 'PictureRounded',
+      showInMenu: true,
+    }
+  },
+  {
+    path: '/PhotoAlbum',
+    name: 'PhotoAlbum',
+    component: PhotoAlbum,
     meta: {
       title: 'Photo Album',
       icon: 'PictureRounded',
