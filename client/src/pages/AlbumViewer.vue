@@ -201,7 +201,7 @@ const fetchImages = async () => {
       description: photo.remark || '暂无描述'
     }))
     
-    total.value = data.total || data.data.length
+    total.value = data.pagination.totalCount || 0
   } catch (error) {
     console.error('获取图片失败:', error)
   } finally {
