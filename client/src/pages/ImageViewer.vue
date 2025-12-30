@@ -44,6 +44,21 @@
       </el-form>
     </div>
 
+    <!-- Selection Controls -->
+    <div class="selection-controls" v-if="images.length > 0">
+      <el-checkbox
+        :model-value="isAllSelected"
+        :indeterminate="isIndeterminate"
+        @change="handleSelectAll"
+        class="select-all-checkbox"
+      >
+        {{ selectedImages.length > 0 ? `Selected ${selectedImages.length}/${pagination.totalCount}` : 'Select All' }}
+      </el-checkbox>
+      <span class="selection-summary" v-if="selectedImages.length > 0">
+        ({{ selectedImages.length }}/{{ pagination.totalCount }} items on current page)
+      </span>
+    </div>
+
     <!-- Single Image Form Dialog -->
     <image-form-dialog
       v-model="showAddForm"
@@ -110,7 +125,7 @@
 </template>
 
 <script>
-import { ref, reactive, onMounted } from "vue";
+import { ref, reactive, onMounted, computed } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useRouter } from 'vue-router';
 import { Check } from "@element-plus/icons-vue";
@@ -155,6 +170,19 @@ export default {
       name: "",
       category: "",
       remark: "",
+    });
+    
+    // 计算属性：判断是否全选
+    const isAllSelected = computed(() => {
+      if (images.value.length === 0) return false;
+      return images.value.every(image => selectedImages.value.includes(image.id));
+    });
+
+    // 计算属性：判断是否为部分选中（半选状态）
+    const isIndeterminate = computed(() => {
+      if (images.value.length === 0) return false;
+      const selectedCount = images.value.filter(image => selectedImages.value.includes(image.id)).length;
+      return selectedCount > 0 && selectedCount < images.value.length;
     });
 
     // 格式化日期
@@ -333,6 +361,8 @@ export default {
     // 处理页面变化
     const handlePageChange = (page) => {
       pagination.currentPage = page;
+      // 切换页面时清空当前选择
+      selectedImages.value = [];
       searchImages();
     };
 
@@ -385,6 +415,8 @@ export default {
       searchForm.category = "";
       searchForm.remark = "";
       pagination.currentPage = 1;
+      // 重置搜索时清空选择
+      selectedImages.value = [];
       searchImages();
     };
 
@@ -396,6 +428,26 @@ export default {
       } catch (error) {
         console.error("Error loading categories:", error);
         ElMessage.error("Failed to load categories");
+      }
+    };
+
+    // 处理全选/取消全选
+    const handleSelectAll = (checked) => {
+      if (checked) {
+        // 全选当前页所有图片
+        images.value.forEach(image => {
+          if (!selectedImages.value.includes(image.id)) {
+            selectedImages.value.push(image.id);
+          }
+        });
+      } else {
+        // 取消全选当前页所有图片
+        images.value.forEach(image => {
+          const index = selectedImages.value.indexOf(image.id);
+          if (index !== -1) {
+            selectedImages.value.splice(index, 1);
+          }
+        });
       }
     };
 
@@ -431,7 +483,10 @@ export default {
       handlePageChange,
       formatDate,
       getCategoryName,
-      goToCategoryManager
+      goToCategoryManager,
+      isAllSelected,
+      isIndeterminate,
+      handleSelectAll
     };
   },
 };
@@ -489,6 +544,25 @@ export default {
   display: flex;
   justify-content: center;
   margin-top: 30px;
+}
+
+.selection-controls {
+  display: flex;
+  align-items: center;
+  padding: 10px 0;
+  background-color: #f5f7fa;
+  border-radius: 4px;
+  margin: 20px 0;
+}
+
+.select-all-checkbox {
+  margin-left: 10px;
+}
+
+.selection-summary {
+  font-size: 12px;
+  color: #606266;
+  margin-left: 10px;
 }
 
 .selection-overlay {

@@ -1,3 +1,4 @@
+App.vue
 <template>
   <div id="app">
     <el-container style="min-height: 100vh;">
@@ -22,6 +23,7 @@
             <el-icon v-if="menuItem.meta.icon === 'Picture'"><Picture /></el-icon>
             <el-icon v-else-if="menuItem.meta.icon === 'Grid'"><Grid /></el-icon>
             <el-icon v-else-if="menuItem.meta.icon === 'Collection'"><Collection /></el-icon>
+            <el-icon v-else-if="menuItem.meta.icon === 'PictureRounded'"><PictureRounded /></el-icon>
             <span>{{ menuItem.meta.title }}</span>
           </el-menu-item>
         </el-menu>
@@ -60,6 +62,7 @@
             <el-icon v-if="menuItem.meta.icon === 'Picture'"><Picture /></el-icon>
             <el-icon v-else-if="menuItem.meta.icon === 'Grid'"><Grid /></el-icon>
             <el-icon v-else-if="menuItem.meta.icon === 'Collection'"><Collection /></el-icon>
+            <el-icon v-else-if="menuItem.meta.icon === 'PictureRounded'"><PictureRounded /></el-icon>
             <span>{{ menuItem.meta.title }}</span>
           </el-menu-item>
         </el-menu>
@@ -83,8 +86,11 @@
 <script>
 import { ref, watch, computed } from 'vue';
 import { useRoute } from 'vue-router';
-import { Picture, Grid, Collection, Menu } from '@element-plus/icons-vue'
+import { Picture, Grid, Collection, Menu, PictureRounded } from '@element-plus/icons-vue'
 import router from './router'; // 导入router实例
+
+// 导入全局主题CSS
+import './assets/css/theme.css';
 
 export default {
   name: 'App',
@@ -92,7 +98,8 @@ export default {
     Picture,
     Grid,
     Collection,
-    Menu
+    Menu,
+    PictureRounded
   },
   setup() {
     const route = useRoute();
