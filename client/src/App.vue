@@ -2,30 +2,33 @@
   <div id="app">
     <el-container style="min-height: 100vh;">
       <!-- 在移动端隐藏侧边栏，使用顶部导航 -->
-      <el-aside width="200px" class="sidebar" :class="{ 'mobile-hidden': isMobile }">
+      <el-aside 
+        v-if="showSidebar" 
+        width="200px" 
+        class="sidebar" 
+        :class="{ 'mobile-hidden': isMobile }"
+      >
         <el-menu
           :default-active="activeIndex"
           class="el-menu-vertical"
           @select="handleSelect"
           router
         >
-          <el-menu-item index="/imageViewer">
-            <el-icon><Picture /></el-icon>
-            <span>Image Viewer</span>
-          </el-menu-item>
-          <el-menu-item index="/mobileImageViewer">
-            <el-icon><Grid /></el-icon>
-            <span>Mobile Viewer</span>
-          </el-menu-item>
-          <el-menu-item index="/categoryManager">
-            <el-icon><Collection /></el-icon>
-            <span>Category Manager</span>
+          <el-menu-item 
+            v-for="menuItem in menuItems" 
+            :key="menuItem.path" 
+            :index="menuItem.path"
+          >
+            <el-icon v-if="menuItem.meta.icon === 'Picture'"><Picture /></el-icon>
+            <el-icon v-else-if="menuItem.meta.icon === 'Grid'"><Grid /></el-icon>
+            <el-icon v-else-if="menuItem.meta.icon === 'Collection'"><Collection /></el-icon>
+            <span>{{ menuItem.meta.title }}</span>
           </el-menu-item>
         </el-menu>
       </el-aside>
       
       <!-- 在移动端显示顶部导航栏 -->
-      <el-header v-if="isMobile" class="mobile-header">
+      <el-header v-if="showHeader && isMobile" class="mobile-header">
         <div class="mobile-header-content">
           <div class="menu-toggle" @click="toggleMenu">
             <el-icon><Menu /></el-icon>
@@ -41,7 +44,7 @@
         direction="ltr"
         size="200px"
         :with-header="false"
-        v-if="isMobile"
+        v-if="showSidebar && isMobile"
       >
         <el-menu
           :default-active="activeIndex"
@@ -49,23 +52,29 @@
           @select="handleMobileSelect"
           router
         >
-          <el-menu-item index="/imageViewer">
-            <el-icon><Picture /></el-icon>
-            <span>Image Viewer</span>
-          </el-menu-item>
-          <el-menu-item index="/mobileImageViewer">
-            <el-icon><Grid /></el-icon>
-            <span>Mobile Viewer</span>
-          </el-menu-item>
-          <el-menu-item index="/categoryManager">
-            <el-icon><Collection /></el-icon>
-            <span>Category Manager</span>
+          <el-menu-item 
+            v-for="menuItem in menuItems" 
+            :key="menuItem.path" 
+            :index="menuItem.path"
+          >
+            <el-icon v-if="menuItem.meta.icon === 'Picture'"><Picture /></el-icon>
+            <el-icon v-else-if="menuItem.meta.icon === 'Grid'"><Grid /></el-icon>
+            <el-icon v-else-if="menuItem.meta.icon === 'Collection'"><Collection /></el-icon>
+            <span>{{ menuItem.meta.title }}</span>
           </el-menu-item>
         </el-menu>
       </el-drawer>
       
       <el-main>
-        <router-view />
+        <router-view v-slot="{ Component }">
+          <keep-alive>
+            <component 
+              :is="Component" 
+              :showSidebar="showSidebar"
+              :showHeader="showHeader"
+            />
+          </keep-alive>
+        </router-view>
       </el-main>
     </el-container>
   </div>
@@ -75,6 +84,7 @@
 import { ref, watch, computed } from 'vue';
 import { useRoute } from 'vue-router';
 import { Picture, Grid, Collection, Menu } from '@element-plus/icons-vue'
+import router from './router'; // 导入router实例
 
 export default {
   name: 'App',
@@ -89,6 +99,13 @@ export default {
     const activeIndex = ref(route.path);
     const drawerVisible = ref(false);
     
+    // 获取路由中需要在菜单中显示的项
+    const menuItems = computed(() => {
+      return router.options.routes.filter(item => 
+        item.meta && item.meta.showInMenu !== false && item.path !== '/'
+      );
+    });
+    
     // 检测是否为移动端
     const isMobile = computed(() => {
       return window.innerWidth <= 768;
@@ -96,16 +113,18 @@ export default {
     
     // 根据当前路由设置标题
     const headerTitle = computed(() => {
-      switch (route.path) {
-        case '/imageViewer':
-          return 'Image Viewer';
-        case '/mobileImageViewer':
-          return 'Mobile Viewer';
-        case '/categoryManager':
-          return 'Category Manager';
-        default:
-          return 'Image Management';
-      }
+      const routeWithTitle = menuItems.value.find(item => item.path === route.path);
+      return routeWithTitle ? routeWithTitle.meta.title : 'Image Management';
+    });
+    
+    // 控制是否显示侧边栏
+    const showSidebar = computed(() => {
+      return !route.meta.hideSidebar;
+    });
+    
+    // 控制是否显示header
+    const showHeader = computed(() => {
+      return !route.meta.hideHeader;
     });
 
     watch(
@@ -137,7 +156,10 @@ export default {
       headerTitle,
       handleSelect,
       handleMobileSelect,
-      toggleMenu
+      toggleMenu,
+      menuItems,
+      showSidebar,
+      showHeader
     };
   }
 };

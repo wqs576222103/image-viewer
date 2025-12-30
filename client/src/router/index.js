@@ -10,18 +10,33 @@ const routes = [
   {
     path: '/imageViewer',
     name: 'ImageViewer',
-    component: ImageViewer
+    component: ImageViewer,
+    meta: {
+      title: 'Image Viewer',
+      icon: 'Picture',
+      showInMenu: true
+    }
   },
   {
     path: '/categoryManager',
     name: 'CategoryManager',
-    component: CategoryManager
+    component: CategoryManager,
+    meta: {
+      title: 'Category Manager',
+      icon: 'Collection',
+      showInMenu: true
+    }
   },
   {
-  path: '/mobileImageViewer',
-  name: 'MobileImageViewer',
-  component: () => import('../pages/MobileImageViewer.vue'),
-}
+    path: '/mobileImageViewer',
+    name: 'MobileImageViewer',
+    component: () => import('../pages/MobileImageViewer.vue'),
+    meta: {
+      title: 'Mobile Viewer',
+      icon: 'Grid',
+      showInMenu: true,
+    }
+  }
 ]
 
 const router = createRouter({
