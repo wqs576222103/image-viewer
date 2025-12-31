@@ -5,7 +5,7 @@ App.vue
       <!-- 在移动端隐藏侧边栏，使用顶部导航 -->
       <el-aside 
         v-if="showSidebar" 
-        width="200px" 
+        :width="isCollapse ? '64px' : '200px'" 
         class="sidebar" 
         :class="{ 'mobile-hidden': isMobile }"
       >
@@ -13,6 +13,7 @@ App.vue
           :default-active="activeIndex"
           class="el-menu-vertical"
           @select="handleSelect"
+          :collapse="isCollapse"
           router
         >
           <el-menu-item 
@@ -24,9 +25,13 @@ App.vue
             <el-icon v-else-if="menuItem.meta.icon === 'Grid'"><Grid /></el-icon>
             <el-icon v-else-if="menuItem.meta.icon === 'Collection'"><Collection /></el-icon>
             <el-icon v-else-if="menuItem.meta.icon === 'PictureRounded'"><PictureRounded /></el-icon>
-            <span>{{ menuItem.meta.title }}</span>
+            <span v-if="!isCollapse">{{ menuItem.meta.title }}</span>
           </el-menu-item>
         </el-menu>
+        <div class="menu-collapse-btn" @click="toggleCollapse">
+          <el-icon v-if="isCollapse"><ArrowRight /></el-icon>
+          <el-icon v-else><ArrowLeft /></el-icon>
+        </div>
       </el-aside>
       
       <!-- 在移动端显示顶部导航栏 -->
@@ -86,7 +91,7 @@ App.vue
 <script>
 import { ref, watch, computed } from 'vue';
 import { useRoute } from 'vue-router';
-import { Picture, Grid, Collection, Menu, PictureRounded } from '@element-plus/icons-vue'
+import { Picture, Grid, Collection, Menu, PictureRounded, ArrowLeft, ArrowRight } from '@element-plus/icons-vue'
 import router from './router'; // 导入router实例
 
 // 导入全局主题CSS
@@ -99,12 +104,15 @@ export default {
     Grid,
     Collection,
     Menu,
-    PictureRounded
+    PictureRounded,
+    ArrowLeft,
+    ArrowRight
   },
   setup() {
     const route = useRoute();
     const activeIndex = ref(route.path);
     const drawerVisible = ref(false);
+    const isCollapse = ref(false);
     
     // 获取路由中需要在菜单中显示的项
     const menuItems = computed(() => {
@@ -156,6 +164,10 @@ export default {
       drawerVisible.value = !drawerVisible.value;
     };
 
+    const toggleCollapse = () => {
+      isCollapse.value = !isCollapse.value;
+    };
+
     return {
       activeIndex,
       drawerVisible,
@@ -166,7 +178,9 @@ export default {
       toggleMenu,
       menuItems,
       showSidebar,
-      showHeader
+      showHeader,
+      isCollapse,
+      toggleCollapse
     };
   }
 };
@@ -183,10 +197,55 @@ export default {
 
 .el-menu-vertical {
   height: 100%;
+  border: none;
+}
+.sidebar {
+  position: relative;
 }
 
 .sidebar.mobile-hidden {
   display: none;
+}
+
+.menu-header {
+  padding: 20px 15px 10px;
+  height: 50px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid #e6e6e6;
+}
+
+.menu-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: bold;
+  color: #333;
+}
+
+.menu-collapse-btn {
+  position: absolute;
+  bottom: 50%;
+  right: 0px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f5f5f5;
+  cursor: pointer;
+  color: #409eff;
+  transition: all 0.3s;
+  border-radius: 50%;
+}
+
+.menu-collapse-btn:hover {
+  background-color: #e6f1ff;
+  right: 4px;
+}
+
+.menu-collapse-btn .el-icon {
+  font-size: 16px;
 }
 
 .mobile-header {

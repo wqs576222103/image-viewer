@@ -1,10 +1,7 @@
 <template>
   <div class="container">
     <div class="header">
-      <h1><i class="fas fa-book-open"></i> 怀旧记忆相册</h1>
-      <p>
-        点击封面打开相册，体验真实翻页效果。每页包含多张照片卡片，使用透明塑料卡套存放，金属环扣设计增强真实感。
-      </p>
+      <h1><i class="fas fa-book-open"></i> 复古记忆相册</h1>
     </div>
 
     <div class="photo-album-wrapper">
@@ -14,7 +11,7 @@
       <div class="decoration vintage-frame"></div>
 
       <!-- 相册主体 -->
-      <div class="photo-album">
+      <div :class="`photo-album ${isOpen ? 'open' : ''}`">
         <!-- 金属环扣 -->
         <div class="ring-holder">
           <div class="ring"></div>
@@ -30,18 +27,19 @@
         <div
           class="album-cover"
           :class="{ closed: !isOpen, opened: isOpen }"
+          :style="{ 'z-index': zIndex }"
           @click="openAlbum"
         >
-         <!-- 金属环扣 -->
-        <div class="ring-holder">
-          <div class="ring"></div>
-        </div>
-        <div class="ring-holder">
-          <div class="ring"></div>
-        </div>
-        <div class="ring-holder">
-          <div class="ring"></div>
-        </div>
+          <!-- 金属环扣 -->
+          <div class="ring-holder">
+            <div class="ring"></div>
+          </div>
+          <div class="ring-holder">
+            <div class="ring"></div>
+          </div>
+          <div class="ring-holder">
+            <div class="ring"></div>
+          </div>
           <div v-if="showCoverContent" class="cover-content">
             <h2 class="cover-title">记忆珍藏</h2>
             <p class="cover-subtitle">那些美好的瞬间</p>
@@ -101,7 +99,7 @@
       <button
         class="control-btn"
         @click="nextPage"
-        :disabled="!isOpen || currentPage === albumPages.length - 1"
+        :disabled="currentPage === albumPages.length - 1"
       >
         下一页 <i class="fas fa-chevron-right"></i>
       </button>
@@ -110,7 +108,7 @@
 </template>
 
 <script>
-import { ref, onMounted, onUnmounted } from "vue";
+import { ref, onMounted, computed, onUnmounted } from "vue";
 import imageService from "@/services/imageService";
 
 export default {
@@ -122,6 +120,7 @@ export default {
     const currentPage = ref(0);
     const isFlipping = ref(false);
     const albumPages = ref([]);
+    const zIndex = ref(9999);
 
     // 从API获取图片数据
     const fetchImages = async () => {
@@ -138,11 +137,12 @@ export default {
           id: img.id,
         }));
 
-        // 将图片分页，每页4张
+        // 将图片分页，每页x张
+        let count = 1;
         const pages = [];
-        for (let i = 0; i < images.length; i += 3) {
+        for (let i = 0; i < images.length; i += count) {
           pages.push({
-            cards: images.slice(i, i + 3),
+            cards: images.slice(i, i + count),
             isFlipping: false,
           });
         }
@@ -165,7 +165,6 @@ export default {
         }, 500);
       }
     };
-
     const toggleAlbum = () => {
       isOpen.value = !isOpen.value;
       setTimeout(
@@ -201,6 +200,10 @@ export default {
     };
 
     const nextPage = () => {
+        if(!isOpen.value) {
+            toggleAlbum()
+            return
+        }
       if (currentPage.value < albumPages.value.length - 1) {
         flipPage(currentPage.value + 1);
       }
@@ -214,31 +217,38 @@ export default {
 
     // 计算页面样式
     const getPageStyle = (index) => {
+      const distance = currentPage.value - index;
       if (!isOpen.value) {
-        return { transform: "rotateY(0deg)", zIndex: 1 };
-      }
-
-      // 当前页面
-      if (index === currentPage.value) {
-        return { transform: "rotateY(0deg)", zIndex: 5 };
+        return {
+          transform: "rotateY(0deg)",
+          zIndex: distance,
+        };
       }
 
       // 左侧页面
       if (index < currentPage.value) {
-        const distance = currentPage.value - index;
         return {
           transform: `rotateY(-180deg)`,
-          zIndex: index + 10,
-          transitionDelay: `${distance * 0.1}s`,
+          zIndex: index + zIndex.value,
+          //   transitionDelay: `${distance * 0.1}s`,
         };
       }
 
       // 右侧页面
       if (index > currentPage.value) {
-        const distance = index - currentPage.value;
         return {
           transform: `rotateY(0deg)`,
-          zIndex: albumPages.value.length - distance,
+          zIndex: distance,
+          //   transitionDelay: `${distance * 0.1}s`,
+        };
+      }
+
+      // 当前页面
+      if (index === currentPage.value) {
+        const distance = index - currentPage.value;
+        return {
+          transform: "rotateY(0deg)",
+        //   zIndex: index + zIndex.value,
           transitionDelay: `${distance * 0.1}s`,
         };
       }
@@ -272,6 +282,7 @@ export default {
 
     return {
       isOpen,
+      zIndex,
       showCoverContent,
       currentPage,
       albumPages,
@@ -315,12 +326,10 @@ body {
 
 .header {
   text-align: center;
-  margin-bottom: 30px;
 }
 
 .header h1 {
   font-size: 2.8rem;
-  margin-bottom: 10px;
   color: #4a3929;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
   font-weight: normal;
@@ -421,6 +430,11 @@ body {
   position: relative;
   z-index: 2;
   transform-style: preserve-3d;
+  transition: transform 2s ease;
+}
+
+.photo-album.open {
+  transform: translateX(50%);
 }
 
 /* 封面样式 */
@@ -435,7 +449,6 @@ body {
   transform-origin: left center;
   transition: transform 2s ease;
   cursor: pointer;
-  z-index: 10;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -535,7 +548,7 @@ body {
 .page-content {
   width: 95%;
   height: 95%;
-  padding: 25px;
+  padding: 0;
   display: flex;
   flex-wrap: wrap;
   justify-content: space-around;
@@ -545,12 +558,11 @@ body {
 
 /* 照片卡片样式 */
 .photo-card {
-  width: 180px;
-  height: 220px;
+  width: 560px;
+  height: 450px;
   background: white;
   border: 8px solid white;
   box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
-  margin: 10px;
   position: relative;
   overflow: hidden;
   transition: transform 0.3s ease;
@@ -659,7 +671,6 @@ body {
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 10px;
   transition: all 0.3s ease;
   box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.2);
 }
@@ -685,7 +696,7 @@ body {
   transform: translateY(-50%);
   width: 40px;
   height: 20px;
-  z-index: 99;
+  z-index: 99999;
   isolation: isolate;
 }
 
@@ -704,24 +715,7 @@ body {
   position: relative;
   width: 50%;
   height: 100%;
-  background: linear-gradient(
-    to bottom,
-    #c0c0c0 0%,
-    #a0a0a0 30%,
-    #808080 70%,
-    #c0c0c0 100%
-  );
-  border-radius: 10px 0 0 10px;
-  /* box-shadow: -2px -2px 10px rgba(0, 0, 0, 0.3), -2px 0 5px rgba(0, 0, 0, 0.2); */
-  position: relative;
-}
-
-.ring::after {
-  content: "";
-  display: inline-block;
-  width: 100%;
-  height: 100%;
-  left: 100%;
+  left: 50%;
   background: linear-gradient(
     to bottom,
     #c0c0c0 0%,
@@ -730,8 +724,24 @@ body {
     #c0c0c0 100%
   );
   border-radius: 0 10px 10px 0;
-  /* box-shadow: 10px 2px 10px rgba(0, 0, 0, 0.3), 2px 0 5px rgba(0, 0, 0, 0.2); */
+  box-shadow: 5px 0px 2px rgba(0, 0, 0, 0.3), 2px 0 5px rgba(0, 0, 0, 0.2);
+}
+
+.ring::before {
+  content: "";
   position: relative;
+  display: inline-block;
+  width: 100%;
+  height: 100%;
+  left: -100%;
+  background: linear-gradient(
+    to bottom,
+    #c0c0c0 0%,
+    #a0a0a0 30%,
+    #808080 70%,
+    #c0c0c0 100%
+  );
+  border-radius: 10px 0 0 10px;
 }
 
 /* 响应式调整 */
@@ -742,28 +752,31 @@ body {
   }
 
   .photo-card {
-    width: 150px;
-    height: 190px;
+    width: 470px;
+    height: 410px;
   }
 
   .cover-title {
     font-size: 2.8rem;
   }
+  .control-btn {
+    font-size: 0.8rem;
+  }
 }
 
-@media (max-width: 750px) {
+@media (max-width: 768px) {
   .photo-album {
     width: 550px;
     height: 400px;
   }
 
   .photo-card {
-    width: 120px;
-    height: 150px;
+    width: 240px;
+    height: 240px;
   }
 
   .page-content {
-    padding: 15px;
+    padding: 0;
   }
 
   .cover-title {

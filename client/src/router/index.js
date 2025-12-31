@@ -54,7 +54,7 @@ const routes = [
     name: 'PhotoAlbum',
     component: PhotoAlbum,
     meta: {
-      title: 'Photo Album',
+      title: 'Vintage Photo Album',
       icon: 'PictureRounded',
       showInMenu: true,
     }
