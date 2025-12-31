@@ -1,7 +1,22 @@
 <template>
   <div class="container">
     <div class="header">
-      <h1><i class="fas fa-book-open"></i> 复古记忆相册</h1>
+      <h1><i class="fas fa-book-open"></i> Category:</h1>
+      <el-select
+        v-model="searchForm.category"
+        placeholder="Select Category"
+        style="width: 280px"
+        clearable
+        filterable
+        @change="categoryChange"
+      >
+        <el-option
+          v-for="category in categories"
+          :key="category.code"
+          :label="category.name"
+          :value="category.code"
+        />
+      </el-select>
     </div>
 
     <div class="photo-album-wrapper">
@@ -108,7 +123,9 @@
 </template>
 
 <script>
-import { ref, onMounted, computed, onUnmounted } from "vue";
+import { ref, onMounted, computed, onUnmounted, reactive } from "vue";
+import { ElMessage, ElMessageBox } from "element-plus";
+import categoryService from "@/services/categoryService";
 import imageService from "@/services/imageService";
 
 export default {
@@ -122,16 +139,65 @@ export default {
     const albumPages = ref([]);
     const zIndex = ref(9999);
 
+    const pagination = reactive({
+      currentPage: 1,
+      totalCount: 0,
+      totalPages: 0,
+    });
+    const finished = ref(false);
+
+    const categories = ref([]);
+
+    // Forms
+    const searchForm = reactive({
+      name: "",
+      category: "",
+      remark: "",
+    });
+
+    // Load categories
+    const loadCategories = async () => {
+      try {
+        const response = await categoryService.getAllCategories();
+        categories.value = response.data;
+      } catch (error) {
+        console.error("Error loading categories:", error);
+        ElMessage.error("Failed to load categories");
+      }
+    };
+
+    const categoryChange = () => {
+      if (isOpen.value) {
+        toggleAlbum();
+      }
+      setTimeout(() => {
+        finished.value = false;
+        albumPages.value = [];
+        pagination.currentPage = 1;
+        fetchImages();
+      }, 1000);
+    };
+
     // 从API获取图片数据
     const fetchImages = async () => {
+      if (finished.value) {
+        return;
+      }
       try {
         const response = await imageService.getAllImages({
-          page: 1,
-          limit: 100, // 获取足够多的图片用于相册
+          page: pagination.currentPage,
+          limit: 10,
+          category: searchForm.category,
         });
+        const res = response.data;
+        const resPage = res.pagination || {};
+        pagination.totalCount = resPage.totalCount || 0;
+        pagination.totalPages = resPage.totalPages || 0;
+        finished.value = resPage.totalPages <= resPage.currentPage;
+        pagination.currentPage++;
 
         // 处理图片数据，转换为相册格式
-        const images = response.data.data.map((img) => ({
+        const images = res.data.map((img) => ({
           image: `${process.env.VUE_APP_API_FILE_SERVER_URL || ""}${img.url}`, // 假设后端返回图片URL
           title: img.name || "未命名图片",
           id: img.id,
@@ -139,7 +205,7 @@ export default {
 
         // 将图片分页，每页x张
         let count = 1;
-        const pages = [];
+        const pages = [...albumPages.value];
         for (let i = 0; i < images.length; i += count) {
           pages.push({
             cards: images.slice(i, i + count),
@@ -157,6 +223,10 @@ export default {
 
     // 打开/关闭相册
     const openAlbum = () => {
+      if (albumPages.value.length === 0) {
+        ElMessage.error("该相册没有图片");
+        return;
+      }
       if (!isOpen.value) {
         isOpen.value = true;
         currentPage.value = 0;
@@ -166,6 +236,10 @@ export default {
       }
     };
     const toggleAlbum = () => {
+      if (albumPages.value.length === 0) {
+        ElMessage.error("该相册没有图片");
+        return;
+      }
       isOpen.value = !isOpen.value;
       setTimeout(
         () => {
@@ -196,14 +270,19 @@ export default {
         albumPages.value[currentPage.value].isFlipping = false;
         currentPage.value = pageIndex;
         isFlipping.value = false;
-      }, 600);
+        // 如果是最后一页，则加载更多图片
+        if (currentPage.value === albumPages.value.length - 1) {
+          console.log("加载更多", finished.value);
+          fetchImages();
+        }
+      }, 300);
     };
 
     const nextPage = () => {
-        if(!isOpen.value) {
-            toggleAlbum()
-            return
-        }
+      if (!isOpen.value) {
+        toggleAlbum();
+        return;
+      }
       if (currentPage.value < albumPages.value.length - 1) {
         flipPage(currentPage.value + 1);
       }
@@ -248,7 +327,7 @@ export default {
         const distance = index - currentPage.value;
         return {
           transform: "rotateY(0deg)",
-        //   zIndex: index + zIndex.value,
+          //   zIndex: index + zIndex.value,
           transitionDelay: `${distance * 0.1}s`,
         };
       }
@@ -271,6 +350,7 @@ export default {
 
     // 组件挂载时获取数据并添加键盘事件监听
     onMounted(() => {
+      loadCategories();
       fetchImages();
       document.addEventListener("keydown", handleKeydown);
     });
@@ -286,22 +366,22 @@ export default {
       showCoverContent,
       currentPage,
       albumPages,
+      categories,
+      searchForm,
+      pagination,
+      finished,
       openAlbum,
       toggleAlbum,
       nextPage,
       prevPage,
       getPageStyle,
+      categoryChange,
     };
   },
 };
 </script>
-
 <style scoped>
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+
 
 body {
   font-family: "Georgia", serif;
@@ -326,6 +406,9 @@ body {
 
 .header {
   text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .header h1 {
