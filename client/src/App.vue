@@ -255,6 +255,8 @@ export default {
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   position: sticky;
   top: 0;
+  padding: 0;
+  height: 40px;
   z-index: 100;
 }
 
@@ -262,8 +264,8 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 50px;
-  padding: 0 15px;
+  height: 40px;
+  padding: 0 5px;
 }
 
 .menu-toggle {

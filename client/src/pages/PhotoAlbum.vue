@@ -26,7 +26,7 @@
       <div class="decoration vintage-frame"></div>
 
       <!-- 相册主体 -->
-      <div :class="`photo-album ${isOpen ? 'open' : ''}`">
+      <div :class="`photo-album ${isOpen && !isMobile ? 'open' : ''}`">
         <!-- 金属环扣 -->
         <div class="ring-holder">
           <div class="ring"></div>
@@ -153,6 +153,11 @@ export default {
       name: "",
       category: "",
       remark: "",
+    });
+
+      // 检测是否为移动端
+    const isMobile = computed(() => {
+      return window.innerWidth <= 768;
     });
 
     // Load categories
@@ -376,6 +381,7 @@ export default {
       prevPage,
       getPageStyle,
       categoryChange,
+      isMobile
     };
   },
 };
@@ -412,7 +418,8 @@ body {
 }
 
 .header h1 {
-  font-size: 2.8rem;
+  margin: 0;
+  font-size: 1.6rem;
   color: #4a3929;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
   font-weight: normal;
