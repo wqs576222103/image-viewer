@@ -809,7 +809,7 @@ body {
   background: #5a4a3a;
   color: #f5f0e6;
   border: none;
-  padding: 12px 25px;
+  padding: 12px;
   font-size: 1.1rem;
   border-radius: 30px;
   cursor: pointer;
