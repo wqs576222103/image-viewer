@@ -93,6 +93,7 @@ import { ref, watch, computed } from 'vue';
 import { useRoute } from 'vue-router';
 import { Picture, Grid, Collection, Menu, PictureRounded, ArrowLeft, ArrowRight } from '@element-plus/icons-vue'
 import router from './router'; // 导入router实例
+import { isMobile } from '@/utils/index';
 
 // 导入全局主题CSS
 import './assets/css/theme.css';
@@ -119,11 +120,6 @@ export default {
       return router.options.routes.filter(item => 
         item.meta && item.meta.showInMenu !== false && item.path !== '/'
       );
-    });
-    
-    // 检测是否为移动端
-    const isMobile = computed(() => {
-      return window.innerWidth <= 768;
     });
     
     // 根据当前路由设置标题
@@ -171,7 +167,7 @@ export default {
     return {
       activeIndex,
       drawerVisible,
-      isMobile,
+      isMobile: isMobile(),
       headerTitle,
       handleSelect,
       handleMobileSelect,

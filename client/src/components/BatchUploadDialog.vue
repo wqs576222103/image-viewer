@@ -81,6 +81,7 @@
 import { ref, reactive, watch, getCurrentInstance, onMounted, onUnmounted } from 'vue';
 import { ElMessage } from 'element-plus';
 import { Delete } from '@element-plus/icons-vue'
+import { isMobile } from '@/utils/index';
 
 export default {
   name: 'BatchUploadDialog',
@@ -101,7 +102,6 @@ export default {
     // State
     const visible = ref(false);
     const fileInput = ref(null);
-    const isMobile = ref(window.innerWidth <= 768);
     
     // Form
     const form = reactive({
@@ -191,7 +191,7 @@ export default {
       formRef,
       rules,
       fileInput,
-      isMobile,
+           isMobile: isMobile(),
       handleFileChange,
       removeFile,
       handleClose,

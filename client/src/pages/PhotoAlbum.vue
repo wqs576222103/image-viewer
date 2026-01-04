@@ -7,7 +7,7 @@
         placeholder="Select Category"
         style="width: 280px"
         clearable
-        filterable
+        :filterable="!isMobile"
         @change="categoryChange"
       >
         <el-option
@@ -19,7 +19,12 @@
       </el-select>
     </div>
 
-    <div class="photo-album-wrapper" @touchstart="handleTouchStart" @touchmove="handleTouchMove" @touchend="handleTouchEnd">
+    <div
+      class="photo-album-wrapper"
+      @touchstart="handleTouchStart"
+      @touchmove="handleTouchMove"
+      @touchend="handleTouchEnd"
+    >
       <!-- 装饰元素 -->
       <div class="decoration basket"></div>
       <div class="decoration magnifier"></div>
@@ -56,7 +61,7 @@
             <div class="ring"></div>
           </div>
           <div v-if="showCoverContent" class="cover-content">
-            <h2 class="cover-title">记忆珍藏</h2>
+            <h2 class="cover-title">{{selectedCategory ? selectedCategory : '记忆珍藏'}}</h2>
             <p class="cover-subtitle">那些美好的瞬间</p>
             <p class="cover-instruction">点击打开相册</p>
           </div>
@@ -127,10 +132,11 @@ import { ref, onMounted, computed, onUnmounted, reactive } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import categoryService from "@/services/categoryService";
 import imageService from "@/services/imageService";
+import { isMobile } from "@/utils/index";
 
 export default {
   name: "PhotoAlbum",
-  setup() {
+  setup() { 
     // 状态
     const isOpen = ref(false);
     const showCoverContent = ref(true);
@@ -147,6 +153,7 @@ export default {
     const finished = ref(false);
 
     const categories = ref([]);
+    const selectedCategory = ref("");
 
     // 添加触摸事件相关状态
     const touchStartX = ref(0);
@@ -157,11 +164,6 @@ export default {
       name: "",
       category: "",
       remark: "",
-    });
-
-      // 检测是否为移动端
-    const isMobile = computed(() => {
-      return window.innerWidth <= 768;
     });
 
     // 触摸事件处理
@@ -213,7 +215,9 @@ export default {
       }
     };
 
-    const categoryChange = () => {
+    const categoryChange = (val) => {
+      const select = categories.value.find((c) => c.code === val);
+      selectedCategory.value = select ? select.name : "";
       if (isOpen.value) {
         toggleAlbum();
       }
@@ -282,7 +286,7 @@ export default {
         }, 500);
       }
     };
-   const closeAlbum = () => {
+    const closeAlbum = () => {
       if (isOpen.value) {
         isOpen.value = false;
         showCoverContent.value = true;
@@ -426,23 +430,22 @@ export default {
       searchForm,
       pagination,
       finished,
+      selectedCategory,
       openAlbum,
       toggleAlbum,
       nextPage,
       prevPage,
       getPageStyle,
       categoryChange,
-      isMobile,
+      isMobile: isMobile(),
       handleTouchStart,
       handleTouchMove,
-      handleTouchEnd
+      handleTouchEnd,
     };
   },
 };
 </script>
 <style scoped>
-
-
 body {
   font-family: "Georgia", serif;
   background-color: #f8f1e4;
@@ -473,7 +476,7 @@ body {
 
 .header h1 {
   margin: 0;
-  font-size: 1.6rem;
+  font-size: 1rem;
   color: #4a3929;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
   font-weight: normal;
@@ -890,9 +893,9 @@ body {
 
 /* 响应式调整 */
 @media (max-width: 900px) {
-.photo-album-wrapper {
-  padding: 15px 0 15px 15px;
-}
+  .photo-album-wrapper {
+    padding: 15px 0 15px 15px;
+  }
   .photo-album {
     width: 700px;
     height: 500px;

@@ -65,6 +65,7 @@
 import { ref, reactive, onMounted, onUnmounted, getCurrentInstance } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import categoryService from '../services/categoryService';
+import { isMobile } from '@/utils/index';
 
 export default {
   name: 'CategoryManager',
@@ -77,7 +78,6 @@ export default {
     const isEditing = ref(false);
     const loading = ref(false);
     const currentCategoryId = ref('');
-    const isMobile = ref(window.innerWidth <= 768);
 
     // Form
     const categoryForm = reactive({
@@ -220,7 +220,7 @@ export default {
       categoryForm,
       categoryFormRef,
       categoryRules,
-      isMobile,
+         isMobile: isMobile(),
       formatDate,
       openCategoryForm,
       editCategory,

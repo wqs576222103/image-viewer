@@ -68,7 +68,7 @@
 
 <script>
 import { ref, reactive, watch, getCurrentInstance, nextTick, onMounted, onUnmounted,  } from 'vue';
-import { ElMessage } from 'element-plus';
+import { isMobile } from '@/utils/index';
 
 export default {
   name: 'ImageFormDialog',
@@ -89,9 +89,6 @@ export default {
     const visible = ref(false);
     const removeImage = ref(false);
     const fileInput = ref(null);
-    
-    // 检测是否为移动端
-    const isMobile = ref(window.innerWidth <= 768);
     
     // Form
     const form = reactive({
@@ -236,7 +233,7 @@ export default {
       rules,
       fileInput,
       removeImage,
-      isMobile,
+        isMobile: isMobile(),
       handleFileChange,
       handleClose,
       submitForm
