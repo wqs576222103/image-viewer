@@ -1,9 +1,5 @@
 <template>
   <div class="mobile-container">
-    <div class="header">
-      <h1>Image Gallery</h1>
-    </div>
-
     <!-- 搜索栏 -->
     <div class="search-section">
       <div class="search-bar">
@@ -327,16 +323,6 @@ export default {
 .mobile-container {
   max-width: 100%;
   padding: 0;
-}
-
-.header {
-  background: #409eff;
-  color: white;
-  padding: 15px 20px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  position: sticky;
-  top: 0;
-  z-index: 100;
 }
 
 .header h1 {

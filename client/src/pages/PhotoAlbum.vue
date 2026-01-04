@@ -1,24 +1,5 @@
 <template>
   <div class="container">
-    <div class="header">
-      <h1><i class="fas fa-book-open"></i> Category:</h1>
-      <el-select
-        v-model="searchForm.category"
-        placeholder="Select Category"
-        style="width: 280px"
-        clearable
-        :filterable="!isMobile"
-        @change="categoryChange"
-      >
-        <el-option
-          v-for="category in categories"
-          :key="category.code"
-          :label="category.name"
-          :value="category.code"
-        />
-      </el-select>
-    </div>
-
     <div
       class="photo-album-wrapper"
       @touchstart="handleTouchStart"
@@ -61,7 +42,9 @@
             <div class="ring"></div>
           </div>
           <div v-if="showCoverContent" class="cover-content">
-            <h2 class="cover-title">{{selectedCategory ? selectedCategory : '记忆珍藏'}}</h2>
+            <h2 class="cover-title">
+              {{ selectedCategory ? selectedCategory : "全部照片" }}
+            </h2>
             <p class="cover-subtitle">那些美好的瞬间</p>
             <p class="cover-instruction">点击打开相册</p>
           </div>
@@ -124,6 +107,21 @@
         下一页 <i class="fas fa-chevron-right"></i>
       </button>
     </div>
+
+    <!-- 筛选按钮 -->
+    <div class="filter-buttons">
+      <button
+        v-for="button in filterButtons"
+        :key="button.filter"
+        :class="[
+          'filter-btn',
+          { active: searchForm.category === button.filter },
+        ]"
+        @click="categoryChange(button.filter)"
+      >
+        <el-icon><component :is="button.elIcon" /></el-icon> {{ button.text }}
+      </button>
+    </div>
   </div>
 </template>
 
@@ -136,7 +134,7 @@ import { isMobile } from "@/utils/index";
 
 export default {
   name: "PhotoAlbum",
-  setup() { 
+  setup() {
     // 状态
     const isOpen = ref(false);
     const showCoverContent = ref(true);
@@ -165,6 +163,14 @@ export default {
       category: "",
       remark: "",
     });
+    const filterButtons = ref([
+      {
+        filter: "all",
+        icon: "fas fa-layer-group",
+        elIcon: "OfficeBuilding",
+        text: "全部照片",
+      },
+    ]);
 
     // 触摸事件处理
     const handleTouchStart = (event) => {
@@ -187,7 +193,9 @@ export default {
       // 判断滑动方向：向左滑动(下一页)，向右滑动(上一页)
       if (touchDiff > 0) {
         // 向左滑动，下一页
-        if (currentPage.value < albumPages.value.length - 1) {
+        if (currentPage.value < 0) {
+          openAlbum();
+        } else {
           nextPage();
         }
       } else {
@@ -204,22 +212,38 @@ export default {
       touchEndX.value = 0;
     };
 
-    // Load categories
-    const loadCategories = async () => {
+    // 获取分类数据
+    const fetchCategories = async () => {
       try {
         const response = await categoryService.getAllCategories();
         categories.value = response.data;
+
+        // 更新筛选按钮
+        filterButtons.value = [
+          {
+            filter: "all",
+            icon: "fas fa-layer-group",
+            elIcon: "OfficeBuilding",
+            text: "全部照片",
+          },
+          ...categories.value.map((category) => ({
+            filter: category.code,
+            icon: getCategoryIcon(category.code),
+            elIcon: getCategoryElIcon(category.code),
+            text: category.name,
+          })),
+        ];
       } catch (error) {
-        console.error("Error loading categories:", error);
-        ElMessage.error("Failed to load categories");
+        console.error("获取分类失败:", error);
       }
     };
 
     const categoryChange = (val) => {
       const select = categories.value.find((c) => c.code === val);
       selectedCategory.value = select ? select.name : "";
+      searchForm.category = val;
       if (isOpen.value) {
-        toggleAlbum();
+        closeAlbum();
       }
       setTimeout(() => {
         finished.value = false;
@@ -227,6 +251,39 @@ export default {
         pagination.currentPage = 1;
         fetchImages();
       }, 1000);
+    };
+
+    const getCategoryIcon = (category) => {
+      // 首先尝试从分类数据中获取图标
+      const categoryItem = categories.value.find(
+        (item) => item.code === category
+      );
+      if (categoryItem?.icon) {
+        return categoryItem.icon;
+      }
+
+      // 根据分类代码返回默认图标
+      const iconMap = {
+        nature: "fas fa-tree",
+        travel: "fas fa-plane",
+        people: "fas fa-user-friends",
+        urban: "fas fa-city",
+        default: "fas fa-image",
+      };
+
+      return iconMap[category] || iconMap.default;
+    };
+    // Element Plus 图标映射
+    const getCategoryElIcon = (category) => {
+      const elIconMap = {
+        nature: "Picture",
+        travel: "Location",
+        people: "User",
+        urban: "OfficeBuilding",
+        default: "Picture",
+      };
+
+      return elIconMap[category] || elIconMap.default;
     };
 
     // 从API获取图片数据
@@ -238,7 +295,7 @@ export default {
         const response = await imageService.getAllImages({
           page: pagination.currentPage,
           limit: 10,
-          category: searchForm.category,
+          category: searchForm.category === "all" ? "" : searchForm.category,
         });
         const res = response.data;
         const resPage = res.pagination || {};
@@ -275,7 +332,7 @@ export default {
     // 打开/关闭相册
     const openAlbum = () => {
       if (albumPages.value.length === 0) {
-        ElMessage.error("该相册没有图片");
+        ElMessage.warning("该相册暂无照片，请切换其他相册");
         return;
       }
       if (!isOpen.value) {
@@ -292,12 +349,12 @@ export default {
         showCoverContent.value = true;
         setTimeout(() => {
           currentPage.value = 0;
-        }, 500);
+        }, 750);
       }
     };
     const toggleAlbum = () => {
       if (albumPages.value.length === 0) {
-        ElMessage.error("该相册没有图片");
+        ElMessage.warning("该相册暂无照片，请切换其他相册");
         return;
       }
       isOpen.value = !isOpen.value;
@@ -340,7 +397,7 @@ export default {
 
     const nextPage = () => {
       if (!isOpen.value) {
-        toggleAlbum();
+        openAlbum();
         return;
       }
       if (currentPage.value < albumPages.value.length - 1) {
@@ -410,7 +467,7 @@ export default {
 
     // 组件挂载时获取数据并添加键盘事件监听
     onMounted(() => {
-      loadCategories();
+      fetchCategories();
       fetchImages();
       document.addEventListener("keydown", handleKeydown);
     });
@@ -431,6 +488,7 @@ export default {
       pagination,
       finished,
       selectedCategory,
+      filterButtons,
       openAlbum,
       toggleAlbum,
       nextPage,
@@ -465,30 +523,6 @@ body {
   max-width: 1200px;
   width: 100%;
   margin: 0 auto;
-}
-
-.header {
-  text-align: center;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.header h1 {
-  margin: 0;
-  font-size: 1rem;
-  color: #4a3929;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
-  font-weight: normal;
-  letter-spacing: 2px;
-}
-
-.header p {
-  font-size: 1.2rem;
-  color: #7d6d5c;
-  max-width: 600px;
-  margin: 0 auto;
-  line-height: 1.6;
 }
 
 .photo-album-wrapper {
@@ -804,7 +838,7 @@ body {
 .album-controls {
   display: flex;
   justify-content: center;
-  margin-top: 30px;
+  margin-top: 10px;
   gap: 20px;
 }
 
@@ -894,7 +928,7 @@ body {
 /* 响应式调整 */
 @media (max-width: 900px) {
   .photo-album-wrapper {
-    padding: 15px 0 15px 15px;
+    padding: 10px 0 15px 15px;
   }
   .photo-album {
     width: 700px;
@@ -936,5 +970,40 @@ body {
   .decoration {
     display: none;
   }
+}
+
+/* 筛选按钮 */
+.filter-buttons {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  margin-bottom: 2.5rem;
+}
+
+.filter-btn {
+  padding: 6px;
+  background-color: white;
+  border: 2px solid var(--primary-color);
+  color: var(--primary-color);
+  border-radius: 50px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.filter-btn:hover {
+  background-color: #e9ecef;
+  transform: translateY(-2px);
+}
+
+.filter-btn.active {
+  background-color: var(--primary-color);
+  color: white;
+  box-shadow: 0 4px 8px rgba(67, 97, 238, 0.3);
 }
 </style>

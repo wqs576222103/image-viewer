@@ -39,16 +39,16 @@ const routes = [
       showInMenu: true,
     }
   },
-  {
-    path: '/album',
-    name: 'AlbumViewer',
-    component: AlbumViewer,
-    meta: {
-      title: 'Photo Album',
-      icon: 'PictureRounded',
-      showInMenu: true,
-    }
-  },
+  // {
+  //   path: '/album',
+  //   name: 'AlbumViewer',
+  //   component: AlbumViewer,
+  //   meta: {
+  //     title: 'Photo Album',
+  //     icon: 'PictureRounded',
+  //     showInMenu: true,
+  //   }
+  // },
   {
     path: '/PhotoAlbum',
     name: 'PhotoAlbum',

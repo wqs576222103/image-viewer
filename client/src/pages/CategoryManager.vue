@@ -1,7 +1,6 @@
 <template>
   <div class="container">
     <div class="header">
-      <h1>Category Management</h1>
       <el-button type="primary" @click="openCategoryForm">Add Category</el-button>
     </div>
 

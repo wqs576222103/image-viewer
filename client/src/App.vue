@@ -1,6 +1,6 @@
 App.vue
 <template>
-  <div id="app">
+  <div class="app-container">
     <el-container style="min-height: 100vh;">
       <!-- 在移动端隐藏侧边栏，使用顶部导航 -->
       <el-aside 
@@ -183,12 +183,15 @@ export default {
 </script>
 
 <style>
-#app {
+.app-container {
   font-family: Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   color: #2c3e50;
   background-color: #f5f5f5;
+}
+.el-main {
+  padding: 10px;
 }
 
 .el-menu-vertical {
@@ -252,7 +255,7 @@ export default {
   position: sticky;
   top: 0;
   padding: 0;
-  height: 40px;
+  height: 30px;
   z-index: 100;
 }
 
@@ -260,8 +263,8 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 40px;
-  padding: 0 5px;
+  height: 100%;
+  padding: 0 4px;
 }
 
 .menu-toggle {
@@ -270,7 +273,7 @@ export default {
 }
 
 .header-title {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 500;
 }
 
