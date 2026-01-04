@@ -19,7 +19,7 @@
       </el-select>
     </div>
 
-    <div class="photo-album-wrapper">
+    <div class="photo-album-wrapper" @touchstart="handleTouchStart" @touchmove="handleTouchMove" @touchend="handleTouchEnd">
       <!-- 装饰元素 -->
       <div class="decoration basket"></div>
       <div class="decoration magnifier"></div>
@@ -148,6 +148,10 @@ export default {
 
     const categories = ref([]);
 
+    // 添加触摸事件相关状态
+    const touchStartX = ref(0);
+    const touchEndX = ref(0);
+
     // Forms
     const searchForm = reactive({
       name: "",
@@ -159,6 +163,44 @@ export default {
     const isMobile = computed(() => {
       return window.innerWidth <= 768;
     });
+
+    // 触摸事件处理
+    const handleTouchStart = (event) => {
+      touchStartX.value = event.touches[0].clientX;
+    };
+
+    const handleTouchMove = (event) => {
+      touchEndX.value = event.touches[0].clientX;
+    };
+
+    const handleTouchEnd = () => {
+      if (!touchStartX.value || !touchEndX.value) return;
+
+      const touchDiff = touchStartX.value - touchEndX.value;
+
+      // 如果滑动距离小于最小滑动距离，则不触发翻页
+      const minSwipeDistance = 50;
+      if (Math.abs(touchDiff) < minSwipeDistance) return;
+
+      // 判断滑动方向：向左滑动(下一页)，向右滑动(上一页)
+      if (touchDiff > 0) {
+        // 向左滑动，下一页
+        if (currentPage.value < albumPages.value.length - 1) {
+          nextPage();
+        }
+      } else {
+        // 向右滑动，上一页
+        if (currentPage.value > 0) {
+          prevPage();
+        } else {
+          closeAlbum();
+        }
+      }
+
+      // 重置触摸坐标
+      touchStartX.value = 0;
+      touchEndX.value = 0;
+    };
 
     // Load categories
     const loadCategories = async () => {
@@ -237,6 +279,15 @@ export default {
         currentPage.value = 0;
         setTimeout(() => {
           showCoverContent.value = false;
+        }, 500);
+      }
+    };
+   const closeAlbum = () => {
+      if (isOpen.value) {
+        isOpen.value = false;
+        showCoverContent.value = true;
+        setTimeout(() => {
+          currentPage.value = 0;
         }, 500);
       }
     };
@@ -381,7 +432,10 @@ export default {
       prevPage,
       getPageStyle,
       categoryChange,
-      isMobile
+      isMobile,
+      handleTouchStart,
+      handleTouchMove,
+      handleTouchEnd
     };
   },
 };
@@ -836,6 +890,9 @@ body {
 
 /* 响应式调整 */
 @media (max-width: 900px) {
+.photo-album-wrapper {
+  padding: 15px 0 15px 15px;
+}
   .photo-album {
     width: 700px;
     height: 500px;
