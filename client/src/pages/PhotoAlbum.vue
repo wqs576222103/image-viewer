@@ -129,7 +129,7 @@
 import { ref, onMounted, computed, onUnmounted, reactive } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import categoryService from "@/services/categoryService";
-import imageService from "@/services/imageService";
+import imageService, {FILE_SERVER_URL} from "@/services/imageService";
 import { isMobile } from "@/utils/index";
 
 export default {
@@ -306,7 +306,7 @@ export default {
 
         // 处理图片数据，转换为相册格式
         const images = res.data.map((img) => ({
-          image: `${process.env.VUE_APP_API_FILE_SERVER_URL || ""}${img.url}`, // 假设后端返回图片URL
+          image: `${FILE_SERVER_URL}${img.url}`, // 假设后端返回图片URL
           title: img.name || "未命名图片",
           id: img.id,
         }));
@@ -773,7 +773,7 @@ body {
 
 .photo-card img {
   width: 100%;
-  height: 100%;
+  max-height: 100%;
   object-fit: cover;
 }
 

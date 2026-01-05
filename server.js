@@ -17,7 +17,7 @@ const PORT = process.env.PORT || 3000;
 // 中间件
 app.use(cors());
 app.use(bodyParser.json());
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/file/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // 使用路由模块
 app.use('/api', imageRoutes);

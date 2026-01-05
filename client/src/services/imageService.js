@@ -1,8 +1,8 @@
 import axios from 'axios'
 
 // 使用环境变量配置API基础URL
-export const API_BASE_URL = process.env.VUE_APP_API_BASE_URL || '/api'
-export const FILE_SERVER_URL = process.env.VUE_APP_API_FILE_SERVER_URL || ''
+export const API_BASE_URL = process.env.VUE_APP_API_BASE_URL
+export const FILE_SERVER_URL = process.env.VUE_APP_API_FILE_SERVER_URL
 
 class ImageService {
   getAllImages(params) {

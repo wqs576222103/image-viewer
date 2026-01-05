@@ -125,7 +125,7 @@ import {
   Location,
   Calendar
 } from '@element-plus/icons-vue'
-import imageService from '@/services/imageService'
+import imageService, { FILE_SERVER_URL } from '@/services/imageService'
 import categoryService from '@/services/categoryService'
 
 // 响应式数据
@@ -197,7 +197,7 @@ const fetchImages = async () => {
       title: photo.name,
       category: photo.category,
       formattedDate: formatDate(photo.createdAt || photo.date),
-      imgSrc: `${process.env.VUE_APP_API_FILE_SERVER_URL || ''}${photo.url}`, // 假设后端返回图片URL
+      imgSrc: `${FILE_SERVER_URL}${photo.url}`, // 假设后端返回图片URL
       description: photo.remark || '暂无描述'
     }))
     
