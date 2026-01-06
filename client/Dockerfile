@@ -37,8 +37,9 @@ COPY --from=build-stage /app/dist /usr/share/nginx/html
 # 调试：检查复制的文件
 RUN ls -la /usr/share/nginx/html
 
-# 暴露端口
-EXPOSE 80
+# 暴露8080
+EXPOSE 8080
+
 
 # 启动nginx
 CMD ["nginx", "-g", "daemon off;"]
