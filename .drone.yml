@@ -6,15 +6,21 @@ platform:
   os: linux
   arch: amd64
 
+variables:
+  DEPLOY_HOST: 129.28.44.109  # 在这里定义变量
+  PROJECT_DIR: ~/image-viewer
+  GIT_REPO: http://129.28.44.109:3001/root/image-viewer.git
+
 clone:
   disable: true  # 禁用自动克隆
-
 
 steps:
   - name: deploy
     image: appleboy/drone-ssh
+    environment:
+      DEPLOY_HOST: ${DEPLOY_HOST}  # 传递到环境变量
     settings:
-      host: 129.28.44.109
+      host: ${DEPLOY_HOST}  # 正确引用已定义的变量
       username:
         from_secret: SERVER_USERNAME
       password:
@@ -23,22 +29,23 @@ steps:
         - |
           set -e  # 遇到错误立即退出
           echo "=== 开始部署 ==="
-
+          
+          echo "当前部署主机: ${DEPLOY_HOST}"
           echo "1. 进入项目目录..."
-          cd ~/image-viewer
-
+          cd ${PROJECT_DIR}
+          
           echo "2. 拉取最新代码..."
-          git pull http://129.28.44.109:3001/root/image-viewer.git main
-
+          git pull ${GIT_REPO} main
+          
           echo "3. 重新构建并启动容器..."
           docker-compose up --build -d
-
+          
           echo "4. 查看容器状态..."
           docker-compose ps
-
-          echo "5. 查看最新日志1..."
+          
+          echo "5. 查看最新日志..."
           docker-compose logs --tail=50
-
+          
           echo "=== 部署完成 ==="
 
 trigger:
