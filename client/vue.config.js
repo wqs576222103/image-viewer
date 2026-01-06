@@ -8,6 +8,10 @@ module.exports = defineConfig({
       '/api': {
         target: 'http://localhost:3000',
         changeOrigin: true
+      },
+      '/file': {
+        target: 'http://localhost:3000',
+        changeOrigin: true
       }
     }
   },
