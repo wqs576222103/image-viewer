@@ -20,6 +20,8 @@ steps:
         from_secret: SERVER_USERNAME
       password:
         from_secret: SERVER_PASSWORD
+      envs:       # 新增这一行：要传递到远程服务器的环境变量列表（大小写敏感）
+      - SERVER_HOST
       script:
         - |
           set -e  # 遇到错误立即退出
@@ -29,7 +31,7 @@ steps:
           cd ~/image-viewer
 
           echo "2. 拉取最新代码..."
-          git pull "http://${SERVER_HOST}:3001/root/image-viewer.git" main
+          git pull "http://$SERVER_HOST:3001/root/image-viewer.git" main
 
           echo "3. 重新构建并启动容器..."
           docker-compose up --build -d
