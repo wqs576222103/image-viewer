@@ -26,7 +26,7 @@ steps:
           echo "=== 开始部署 ==="
 
           echo "1. 进入项目目录..."
-          cd ~/image-viewer
+          cd ~/code/image-viewer
 
           echo "2. 拉取最新代码..."
           git pull origin1 main # origin1修改为你的远程仓库地址
