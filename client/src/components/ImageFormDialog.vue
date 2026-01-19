@@ -105,6 +105,9 @@ export default {
       name: [
         { required: true, message: 'Please enter image name', trigger: 'blur' }
       ],
+      category: [
+        { required: true, message: 'Please select a category', trigger: 'change' }
+      ],
       image: [
         { 
           required: true, 

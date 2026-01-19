@@ -115,7 +115,10 @@ export default {
     // Validation rules
     const rules = {
       files: [
-        { required: true, message: 'Please select at least one file', trigger: 'change' }
+        { required: true, message: 'Please select at least one file', trigger: 'change' },
+      ],
+      category: [
+        { required: true, message: 'Please select a category', trigger: 'change' }
       ]
     };
     
