@@ -31,6 +31,9 @@ steps:
           echo "2. 拉取最新代码..."
           git pull origin1 main # origin1修改为你的远程仓库地址
 
+          echo "3. 停止并删除旧的容器..."
+          docker-compose down
+
           echo "3. 重新构建并启动容器..."
           docker-compose up --build -d
 
