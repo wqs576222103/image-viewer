@@ -16,8 +16,6 @@ services:
       - mysql_data:/var/lib/mysql
       - ./mysql/conf.d:/etc/mysql/conf.d:ro  # 可选：自定义配置文件
       - ./mysql/init:/docker-entrypoint-initdb.d:ro  # 可选：初始化脚本目录
-    networks:
-      - app_network
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p123456"]
       interval: 30s
@@ -39,8 +37,6 @@ services:
       - "3000:3000"
     volumes:
       - ./uploads:/app/uploads
-    networks:
-      - app_network
     depends_on:
       mysql:
         condition: service_healthy
@@ -61,13 +57,7 @@ services:
       - "8080:8080"
     depends_on:
       - backend
-    networks:
-      - app_network
 
 volumes:
   mysql_data:
     driver: local
-
-networks:
-  app_network:
-    driver: bridge
