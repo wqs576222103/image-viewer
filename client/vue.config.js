@@ -16,5 +16,5 @@ module.exports = defineConfig({
     }
   },
   // 生产环境下的公共路径, 生产环境用 /front
-  // publicPath: process.env.NODE_ENV === 'production' ? '/front/' : '/',
+  publicPath: process.env.NODE_ENV === 'production' ? '/front' : '/',
 })
