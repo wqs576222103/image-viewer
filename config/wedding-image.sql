@@ -20,8 +20,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 -- ----------------------------
 -- Table structure for categories
 -- ----------------------------
-DROP TABLE IF EXISTS `categories`;
-CREATE TABLE `categories`  (
+CREATE TABLE IF NOT EXISTS `categories`  (
   `id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `code` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -39,8 +38,7 @@ INSERT INTO `categories` VALUES ('ffdccd01-6c44-4785-bc18-906d07920b18', '婚纱
 -- ----------------------------
 -- Table structure for images
 -- ----------------------------
-DROP TABLE IF EXISTS `images`;
-CREATE TABLE `images`  (
+CREATE TABLE IF NOT EXISTS `images`  (
   `id` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `url` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -86,8 +84,7 @@ INSERT INTO `images` VALUES ('f704cbc6-9e96-4782-b04b-6e7b721dec75', 'DSC08073',
 -- ----------------------------
 -- Table structure for users
 -- ----------------------------
-DROP TABLE IF EXISTS `users`;
-CREATE TABLE `users`  (
+CREATE TABLE  IF NOT EXISTS `users`  (
   `id` int NOT NULL AUTO_INCREMENT,
   `username` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `password` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
