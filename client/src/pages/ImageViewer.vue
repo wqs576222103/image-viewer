@@ -125,7 +125,7 @@
 </template>
 
 <script>
-import { ref, reactive, onMounted, computed } from "vue";
+import { ref, reactive, onMounted, computed, onActivated } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useRouter } from 'vue-router';
 import { Check } from "@element-plus/icons-vue";
@@ -457,6 +457,11 @@ export default {
       loadCategories();
     });
 
+    // 在组件激活时重新加载分类
+    onActivated(() => {
+      loadCategories();
+    });
+
     return {
       images,
       categories,
@@ -486,7 +491,8 @@ export default {
       goToCategoryManager,
       isAllSelected,
       isIndeterminate,
-      handleSelectAll
+      handleSelectAll,
+      loadCategories
     };
   },
 };
