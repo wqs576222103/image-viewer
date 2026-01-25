@@ -77,8 +77,7 @@ const routes = [
 ]
 
 const router = createRouter({
-  history: createWebHistory(),
-  // history: process.env.NODE_ENV === 'production' ? createWebHistory('/front') : createWebHistory(),
+  history: process.env.NODE_ENV === 'production' ? createWebHistory('./') : createWebHistory(),
   routes
 })
 
