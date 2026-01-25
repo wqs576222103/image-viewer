@@ -19,7 +19,7 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(bodyParser.json());
 // 设置缓存
-app.use('/file/uploads', express.static(path.join(__dirname, 'uploads'), { maxAge: 86400000 }));
+app.use('/file/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // 使用路由模块
 app.use('/api', imageRoutes);
