@@ -553,7 +553,7 @@ export default {
 .image-preview {
   width: 100%;
   height: 200px;
-  object-fit: cover;
+  object-fit: contain;
 }
 .image-info {
   padding: 10px;
