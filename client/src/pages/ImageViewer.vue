@@ -126,7 +126,7 @@
 
 <script>
 import { ref, reactive, onMounted, computed, onActivated } from "vue";
-import { ElMessage, ElMessageBox } from "element-plus";
+import { ElMessage, ElMessageBox , ElLoading} from "element-plus";
 import { useRouter } from 'vue-router';
 import { Check } from "@element-plus/icons-vue";
 import imageService, { FILE_SERVER_URL } from "../services/imageService";
@@ -248,6 +248,10 @@ export default {
 
     // Handle save image (add or update)
     const handleSaveImage = async ({ id, formData, isEditMode }) => {
+      const loading = ElLoading.service({
+        fullscreen: true,
+        text: "Saving...",
+      });
       try {
         if (isEditMode) {
           // Edit mode
@@ -265,13 +269,18 @@ export default {
       } catch (error) {
         console.error("Error saving image:", error);
         ElMessage.error("Failed to save image");
+      } finally {
+        loading.close();
       }
     };
 
     const handleBatchUpload = async ({ files, category, remark }) => {
       let successCount = 0;
       let failCount = 0;
-
+      const loading = ElLoading.service({
+        fullscreen: true,
+        text: "Saving...",
+      });
       try {
         // Process each file sequentially
         for (let i = 0; i < files.length; i++) {
@@ -308,6 +317,8 @@ export default {
       } catch (error) {
         console.error("Error in batch upload:", error);
         ElMessage.error("Batch upload failed");
+      } finally {
+        loading.close();
       }
     };
 
@@ -368,6 +379,10 @@ export default {
 
     // Search images with pagination
     const searchImages = async () => {
+      const loading = ElLoading.service({
+        fullscreen: true,
+        text: "loading...",
+      });
       try {
         const params = {
           page: pagination.currentPage,
@@ -406,6 +421,8 @@ export default {
       } catch (error) {
         console.error("Error searching images:", error);
         ElMessage.error("Failed to search images");
+      } finally {
+        loading.close();
       }
     };
 
