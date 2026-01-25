@@ -10,6 +10,7 @@ const { sequelize, connectDB } = require('./config/database');
 // 引入路由模块
 const imageRoutes = require('./routes/imageRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
+const authRoutes = require('./routes/authRoutes'); // 新增认证路由
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -23,6 +24,7 @@ app.use('/file/uploads', express.static(path.join(__dirname, 'uploads'), { maxAg
 // 使用路由模块
 app.use('/api', imageRoutes);
 app.use('/api', categoryRoutes);
+app.use('/api', authRoutes); // 注册认证路由
 
 // 启动服务器
 app.listen(PORT, async () => {

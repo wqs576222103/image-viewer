@@ -36,7 +36,7 @@
 
     <!-- Category List -->
     <div class="category-list">
-      <el-table :data="categories" style="width: 100%" v-loading="loading">
+      <el-table class="category-list-table" :data="categories" v-loading="loading">
         <el-table-column prop="name" label="Name" />
         <el-table-column prop="code" label="Code" />
         <el-table-column prop="createTime" label="Create Time">
@@ -257,7 +257,13 @@ export default {
   border-radius: 4px;
   padding: 20px;
   box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+
+
 }
+  .category-list-table {
+    /* 固定高度，避免切换页面重复计算 */
+    height: calc(100vh - 200px);
+  }
 
 @media (max-width: 768px) {
   .container {

@@ -3,8 +3,20 @@ import ImageViewer from '../pages/ImageViewer.vue'
 import CategoryManager from '../pages/CategoryManager.vue'
 import AlbumViewer from '../pages/AlbumViewer.vue'
 import PhotoAlbum from '../pages/PhotoAlbum.vue'
+import Login from '../pages/Login.vue'
+import AuthService from '../services/authService'
 
 const routes = [
+  {
+    path: '/login',
+    name: 'Login',
+    component: Login,
+    meta: {
+      title: '登录',
+      hideSidebar: true,
+      hideHeader: true
+    }
+  },
   {
     path: '/',
     redirect: '/imageViewer'
@@ -16,7 +28,8 @@ const routes = [
     meta: {
       title: 'Image Viewer',
       icon: 'Picture',
-      showInMenu: true
+      showInMenu: true,
+      requiresAuth: true
     }
   },
   {
@@ -26,7 +39,8 @@ const routes = [
     meta: {
       title: 'Category Manager',
       icon: 'Collection',
-      showInMenu: true
+      showInMenu: true,
+      requiresAuth: true
     }
   },
   {
@@ -37,6 +51,7 @@ const routes = [
       title: 'Mobile Viewer',
       icon: 'Grid',
       showInMenu: true,
+      requiresAuth: true
     }
   },
   // {
@@ -65,6 +80,26 @@ const router = createRouter({
   // history: process.env.NODE_ENV === 'production' ? createWebHistory('/front') : createWebHistory(),
   history: createWebHistory(),
   routes
+})
+
+// 全局路由守卫
+router.beforeEach((to, from, next) => {
+  // 如果路由需要认证
+  if (to.meta.requiresAuth) {
+    // 检查用户是否已认证
+    if (AuthService.isAuthenticated()) {
+      next()
+    } else {
+      // 未认证则跳转到登录页
+      next({
+        path: '/login',
+        query: { redirect: to.fullPath } // 保存重定向的目标路径
+      })
+    }
+  } else {
+    // 不需要认证的路由直接通过
+    next()
+  }
 })
 
 export default router
