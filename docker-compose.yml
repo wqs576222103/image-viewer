@@ -12,20 +12,20 @@ services:
       TZ: Asia/Shanghai  # 可根据需要调整时区
     ports:
       - "3306:3306"
-    volumes:
-      - mysql_data:/var/lib/mysql
-      - ./config/db-init.sql:/docker-entrypoint-initdb.d/init.sql
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p123456"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
+    # volumes:
+    #   - mysql_data:/var/lib/mysql
+    #   - ./config/db-init.sql:/docker-entrypoint-initdb.d/init.sql
+    # healthcheck:
+    #   test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p123456"]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 3
+    #   start_period: 30s
     command:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
       - --default-authentication-plugin=mysql_native_password
-      - --init-file=/docker-entrypoint-initdb.d/init.sql  # 添加这一行
+      # - --init-file=/docker-entrypoint-initdb.d/init.sql  # 添加这一行
 
   # Backend service
   backend:

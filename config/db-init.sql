@@ -73,6 +73,11 @@ CREATE TABLE IF NOT EXISTS `users`  (
 -- ----------------------------
 -- Records of users
 -- ----------------------------
-INSERT INTO `users` VALUES (1, 'admin', '456789asd', NULL, '2026-01-25 11:59:03', '2026-01-25 11:59:03');
+/* 存在admin就不插入了 */
+INSERT INTO users (id, username, password, salt, createTime, updateTime)
+SELECT 1, 'admin', '456789asd', NULL, '2026-01-25 11:59:03', '2026-01-25 11:59:03'
+WHERE NOT EXISTS (
+    SELECT 1 FROM users WHERE username = 'admin'
+);
 
 SET FOREIGN_KEY_CHECKS = 1;
