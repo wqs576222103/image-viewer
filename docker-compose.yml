@@ -12,8 +12,8 @@ services:
       TZ: Asia/Shanghai  # 可根据需要调整时区
     ports:
       - "3306:3306"
-    # volumes:
-    #   - mysql_data:/var/lib/mysql
+    volumes:
+      - mysql_data:/var/lib/mysql
     #   - ./config/db-init.sql:/docker-entrypoint-initdb.d/init.sql
     # healthcheck:
     #   test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p123456"]
