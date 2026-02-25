@@ -220,3 +220,9 @@ DELETE /api/images/:id
 ├── docker-compose.yml      # Docker Compose 编排文件
 └── README.md               # 项目说明文档
 ```
+
+
+# QA
+
+1. mysql启动后，连接不上。
+    答：有可能是卷挂载目录权限没有设置，运行 chmod -R 777 ./mysql_data
